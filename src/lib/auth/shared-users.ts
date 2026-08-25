@@ -39,12 +39,67 @@ import { getRedis, sharedKey } from "@/lib/redis";
  * created through Google sign-in has no password, and so does one created by an
  * administrator on someone's behalf. That optionality is the sharp edge in this
  * file — see `verifySharedUser`.
+ *
+ * `createdAt` is optional in the type for the same reason it is checked so
+ * carefully below: this codebase does not write these rows and cannot promise
+ * what is in them. A row missing it is refused rather than assumed recent.
  */
 export interface SharedUser {
   email: string;
   name?: string;
   phone?: string;
   passwordHash?: string;
+  /** Milliseconds since the epoch, set by the other site at creation. */
+  createdAt?: number;
+}
+
+/**
+ * The cutoff, and why this path is off unless you set one.
+ *
+ * The other library's registration is open: its `/signup` is a public route,
+ * asks for a name and an address and nothing else, and creates a row with no
+ * password — which its sign-in then sets to whatever is typed first. Three
+ * steps, no secret at any point, and a stranger holds a credential this door
+ * would otherwise honour. That would make the word printed in the sponsored
+ * copy bypassable by anyone who found the other site.
+ *
+ * The fix has to live here, because that project is not ours to change. So this
+ * path trusts a shared account only if it was registered *before* a moment you
+ * name: the readers who were already there keep their way in, and an account
+ * minted afterwards opens nothing here.
+ *
+ * **Unset means off.** Not "no cutoff" — off. An unparseable value means off
+ * too. This is the same stance `adminEmails` takes in `lib/auth/config`: a
+ * variable nobody set must never read as permission, and the failure that
+ * turns readers away is always preferable to the one that lets strangers in.
+ *
+ * Accepts an ISO date (`2026-08-23`, `2026-08-23T00:00:00Z`) or milliseconds
+ * since the epoch, because both are things a person reasonably pastes into a
+ * hosting dashboard.
+ */
+const sharedLoginBefore: number | null = (() => {
+  // Surrounding quotes are stripped because a value pasted into a hosting
+  // dashboard keeps them as literal characters. Not cosmetic: `"2026-08-23"`
+  // still parses, via a lenient fallback, but as *local* midnight rather than
+  // UTC — six hours adrift here, and silently.
+  const raw = (process.env.SHARED_LOGIN_BEFORE ?? "")
+    .trim()
+    .replace(/^["']|["']$/g, "")
+    .trim();
+  if (!raw) return null;
+  if (/^\d+$/.test(raw)) return Number(raw);
+  const parsed = Date.parse(raw);
+  return Number.isNaN(parsed) ? null : parsed;
+})();
+
+/**
+ * Whether the cross-site path is switched on at all, for the admin screen.
+ *
+ * Worth surfacing: with this off, a reader from the other library is told to
+ * check the page in a book they may not own, and nothing in the logs says why.
+ */
+export function isSharedLoginEnabled(): boolean {
+  return sharedLoginBefore !== null;
 }
 
 /**
@@ -115,7 +170,13 @@ function safeEqual(a: string, b: string): boolean {
 /**
  * Whether (address, password) matches an account on the other site.
  *
- * The case to read twice is **a record with no `passwordHash`**. This refuses
+ * Three things must hold, and only the third is about the password: the cutoff
+ * must be configured at all, the account must predate it, and the hash must
+ * match. The first two are `sharedLoginBefore` above — read that comment before
+ * changing anything here, because loosening either one re-opens a bypass of the
+ * printed word.
+ *
+ * The other case to read twice is **a record with no `passwordHash`**. This refuses
  * it. The other site does something different — it accepts whatever password is
  * typed and saves it — which means over there the first person to type anything
  * at a passwordless address takes it over. That is the same flaw the ancestor of
@@ -136,10 +197,20 @@ export async function verifySharedUser(
   email: string,
   password: string,
 ): Promise<SharedUser | null> {
+  // Off unless a cutoff is configured. First, so that an unconfigured
+  // deployment does not even reach for the network to be told no.
+  if (sharedLoginBefore === null) return null;
   if (!password) return null;
 
   const user = await findSharedUser(email);
   if (!user?.passwordHash) return null;
+
+  // Registered before the cutoff, or it opens nothing. `typeof` rather than a
+  // truthiness test, and refusing rather than defaulting: a row with no
+  // `createdAt`, or a string where a number belongs, is a row this codebase
+  // cannot date, and an undatable row must not be treated as an old one.
+  if (typeof user.createdAt !== "number") return null;
+  if (!(user.createdAt < sharedLoginBefore)) return null;
 
   return safeEqual(await sha256Hex(password), user.passwordHash) ? user : null;
 }
