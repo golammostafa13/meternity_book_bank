@@ -18,6 +18,7 @@ import {
   MAX_ATTEMPTS,
 } from "@/lib/auth/rate-limit";
 import { saveReader } from "@/lib/auth/readers";
+import { verifySharedUser } from "@/lib/auth/shared-users";
 import { signSession } from "@/lib/auth/session";
 import { adminUsername, displayName } from "@/lib/auth/username";
 import { districtById, thanaById } from "@/lib/data/bd-geo";
@@ -30,13 +31,20 @@ import { fill } from "@/lib/i18n/format";
  *
  * Two actions, and they are not two halves of one flow:
  *
- * **`enterAction`** is the door. Two fields, answering two different questions.
- * The word printed in the sponsored copy opens the library, and every reader
- * types the same one; the address alongside it grants a reader nothing at all
- * and is collected because it is the only durable handle this site has on who
- * is reading. For an administrator the two are read together: a different word,
- * printed nowhere, opens the admin screens *only* for an address listed in
- * `ADMIN_EMAILS`.
+ * **`enterAction`** is the door. Two fields, and three ways through them. The
+ * word printed in the sponsored copy opens the library, and every reader types
+ * the same one. For an administrator the two fields are read together: a
+ * different word, printed nowhere, opens the admin screens *only* for an
+ * address listed in `ADMIN_EMAILS`. And failing both of those, the address and
+ * word are offered to the other library sharing this database — the sponsor
+ * runs two sites and asked that registering on either be enough for either, so
+ * a reader with an account over there gets in with the password they chose
+ * there. See `lib/auth/shared-users`.
+ *
+ * That third path is the one that changed what the address means. For a reader
+ * arriving with the printed word it still grants nothing and is collected only
+ * because it is the one durable handle this site has on who is reading. For a
+ * reader arriving from the other library it is half the credential.
  *
  * **`registerAction`** is the register. It writes a row so the sponsor knows who
  * received a copy and where (which is what the District and Thana fields are
@@ -125,12 +133,19 @@ async function setSessionCookie(token: string): Promise<void> {
  * cheap test runs before the one worth protecting.
  *
  * The password rejection says nothing else. Not whether the word was close, not
- * how long the right one is, not which of the two was being compared, and — the
- * one that would matter most — not whether the failure was the word or the
- * address. `doorRole` returns the same `null` for an unlisted address typing the
- * admin password as for a listed one typing nonsense, and this returns the same
- * sentence for both, so the form cannot be used to discover who the
- * administrators are.
+ * how long the right one is, not which of the three comparisons was being made,
+ * and — the ones that would matter most — not whether the failure was the word
+ * or the address, and not whether the address is registered on the other site.
+ * `doorRole` returns the same `null` for an unlisted address typing the admin
+ * password as for a listed one typing nonsense, `verifySharedUser` returns the
+ * same `null` for an unknown address as for a known one with the wrong
+ * password, and this returns one sentence for all of them. So the form cannot
+ * be used to discover who the administrators are, nor who has registered on the
+ * other library.
+ *
+ * Note what the ordering buys. Both printed words are compared in memory before
+ * anything is read from Redis, so the common case costs no round trip and an
+ * unreachable store cannot shut the door on a reader holding their book.
  */
 export async function enterAction(
   prev: DoorState,
@@ -160,7 +175,39 @@ export async function enterAction(
     return { ok: false, attempt, email, message: dict.auth.errorEmailInvalid };
   }
 
-  const role = doorRole(email, String(formData.get("password") ?? ""));
+  const typed = String(formData.get("password") ?? "");
+
+  // The two printed words first, unchanged. `doorRole` is pure and touches
+  // nothing over the network, so the ordinary reader with a book in their hand
+  // gets in without this action ever reaching for the shared store — which is
+  // also why an outage over there cannot close this door.
+  let role = doorRole(email, typed);
+
+  // Their name as the other site knows it, when that is where they came from.
+  let sharedName: string | undefined;
+
+  // Neither printed word. Before turning this reader away, ask the other
+  // library whether this is one of its registered readers typing the password
+  // they chose there. The sponsor runs both sites and asked that registering on
+  // either be enough for either; see `lib/auth/shared-users`.
+  //
+  // Hard-coded `"reader"`, and it must stay that way. An account on the other
+  // site is evidence that somebody registered, and nothing more: administering
+  // *this* library needs ADMIN_PASSWORD and an address in ADMIN_EMAILS, and
+  // there is no route to `"admin"` through a store this codebase does not own.
+  if (!role) {
+    const shared = await verifySharedUser(email, typed);
+    if (shared) {
+      role = "reader";
+      sharedName = shared.name?.trim() || undefined;
+    }
+  }
+
+  // One sentence for every kind of failure, still. Not whether the word was
+  // close, not which of the three comparisons was being made, and — the one
+  // that would matter most now — not whether this address is registered on the
+  // other site. A different message for a known address would turn this form
+  // into a way to enumerate the other library's readers.
   if (!role) {
     return { ok: false, attempt, email, message: dict.auth.errorWrongPassword };
   }
@@ -182,7 +229,14 @@ export async function enterAction(
       // The administrator shows as the library rather than as a person: the
       // admin screens are the library's own, and whoever is at the desk today
       // is not what that header is naming.
-      name: role === "admin" ? adminUsername : displayName(email),
+      //
+      // A reader who came in on an account from the other site has told
+      // somebody their actual name, so the pill uses it in preference to the
+      // local part of their address.
+      name:
+        role === "admin"
+          ? adminUsername
+          : (sharedName ?? displayName(email)),
     }),
   );
 

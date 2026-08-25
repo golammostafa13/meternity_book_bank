@@ -188,10 +188,17 @@ export function passwordRole(typed: string): Role | null {
 }
 
 /**
- * The whole door, both fields.
+ * The printed door, both fields.
  *
  * `passwordRole` above says which of the two printed words was typed;
  * this says what the pair of (address, word) actually opens.
+ *
+ * No longer the *whole* door, and the rename is the warning. `enterAction` has
+ * a third path: an address and password belonging to the other library sharing
+ * this database (`lib/auth/shared-users`). It runs only after this returns
+ * `null`, and it can only ever produce a reader. So this function remains the
+ * only thing that decides `"admin"`, and it stays pure and offline — which is
+ * what lets the ordinary reader in without a network round trip.
  *
  * The case worth reading twice is the admin password typed by an address that
  * is not on the list. It returns `null` — turned away — rather than falling
@@ -202,10 +209,12 @@ export function passwordRole(typed: string): Role | null {
  * turns the admin password's extra character into no protection at all. One
  * word opens one thing.
  *
- * The address is not checked for readers, and there is nothing to check it
- * against: the reader door is a printed word by design, and an allowlist of
- * readers would be a different site. It is required, shape-tested and recorded,
- * and that is all.
+ * The address is not checked for readers *here*, and there is nothing in this
+ * module to check it against: the printed reader door is a word by design, and
+ * an allowlist of readers would be a different site. It is required,
+ * shape-tested and recorded, and for this path that is all. A reader whose
+ * address does mean something — because they registered on the other library —
+ * is handled after this returns `null`, not by loosening it.
  */
 export function doorRole(email: string, typed: string): Role | null {
   const word = passwordRole(typed);

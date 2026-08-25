@@ -24,12 +24,10 @@
  * it does not make one impossible. Layered defence, not a boundary.
  */
 
+import { appKey, getRedis } from "@/lib/redis";
+
 const WINDOW_SECONDS = 10 * 60;
 const MAX_ATTEMPTS = 10;
-
-const redisUrl = process.env.KV_REST_API_URL ?? process.env.UPSTASH_REDIS_REST_URL;
-const redisToken =
-  process.env.KV_REST_API_TOKEN ?? process.env.UPSTASH_REDIS_REST_TOKEN;
 
 /** Fixed windows, so the whole record is one integer and one expiry. */
 const local = new Map<string, { count: number; resetAt: number }>();
@@ -59,14 +57,9 @@ export interface RateLimitResult {
 }
 
 async function redisCheck(key: string): Promise<RateLimitResult | null> {
-  if (!redisUrl || !redisToken) return null;
   try {
-    const { Redis } = await import("@upstash/redis");
-    const redis = new Redis({
-      url: redisUrl,
-      token: redisToken,
-      automaticDeserialization: false,
-    });
+    const redis = await getRedis();
+    if (!redis) return null;
     const count = Number(await redis.incr(key));
     // Only the request that created the key sets the expiry, so the window is
     // fixed from the first attempt rather than sliding forward on every one.
@@ -114,7 +107,12 @@ function localCheck(key: string): RateLimitResult {
 export async function checkDoorAttempt(
   address: string,
 ): Promise<RateLimitResult> {
-  const key = `door:${address}`;
+  // `appKey`, and this is the one key in the codebase where sharing a name
+  // would be an outright bug rather than a merge. A neighbouring project
+  // pointed at the same database and counting `door:1.2.3.4` would spend this
+  // site's ten attempts for that address, and the reader turned away here
+  // would be told to wait for something they never did.
+  const key = appKey(`door:${address}`);
   return (await redisCheck(key)) ?? localCheck(key);
 }
 

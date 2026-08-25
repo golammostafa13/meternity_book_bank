@@ -1,6 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { normaliseEmail, type Role } from "@/lib/auth/config";
+import { appKey, getRedis } from "@/lib/redis";
 
 /**
  * Who has opened the library, and when.
@@ -52,29 +53,17 @@ export interface AccountRecord {
   visits: number;
 }
 
-const redisUrl = process.env.KV_REST_API_URL ?? process.env.UPSTASH_REDIS_REST_URL;
-const redisToken =
-  process.env.KV_REST_API_TOKEN ?? process.env.UPSTASH_REDIS_REST_TOKEN;
-
-type RedisClient = import("@upstash/redis").Redis;
-let redis: RedisClient | undefined;
-
-async function getRedis(): Promise<RedisClient | undefined> {
-  if (!redisUrl || !redisToken) return undefined;
-  if (!redis) {
-    const { Redis } = await import("@upstash/redis");
-    redis = new Redis({
-      url: redisUrl,
-      token: redisToken,
-      automaticDeserialization: false,
-    });
-  }
-  return redis;
-}
-
-/** The sorted set that makes the store listable; score is `lastSeenAt`. */
-const INDEX_KEY = "accounts:index";
-const recordKey = (email: string) => `account:${email}`;
+/**
+ * The sorted set that makes the store listable; score is `lastSeenAt`.
+ *
+ * `appKey`, not `sharedKey`, and that is the load-bearing choice in this file
+ * now that the database is shared. "Who has opened *this* library" is the whole
+ * meaning of a row here; merged with a neighbouring site's visitors it becomes
+ * "who has opened something", which is not a question the admin screen is
+ * asking and not a number the sponsor was promised.
+ */
+const INDEX_KEY = appKey("accounts:index");
+const recordKey = (email: string) => appKey(`account:${email}`);
 
 function readAll(): Record<string, AccountRecord> {
   if (!existsSync(DATA_FILE)) return {};
@@ -174,7 +163,10 @@ export async function listAccounts(): Promise<AccountRecord[]> {
   return Object.values(readAll()).sort((a, b) => b.lastSeenAt - a.lastSeenAt);
 }
 
-/** Whether a durable store is configured. Shown on the admin screen. */
-export function isRedisConfigured(): boolean {
-  return Boolean(redisUrl && redisToken);
-}
+/**
+ * Whether a durable store is configured. Shown on the admin screen.
+ *
+ * Re-exported from `lib/redis` rather than recomputed, so there is one answer
+ * to "is Redis on" and not one per store that happened to ask.
+ */
+export { isRedisConfigured } from "@/lib/redis";

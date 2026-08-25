@@ -1,6 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { normalisePhone } from "@/lib/auth/config";
+import { appKey, getRedis } from "@/lib/redis";
 
 /**
  * The register of readers.
@@ -39,29 +40,15 @@ export interface ReaderRecord {
   createdAt: number;
 }
 
-const redisUrl = process.env.KV_REST_API_URL ?? process.env.UPSTASH_REDIS_REST_URL;
-const redisToken =
-  process.env.KV_REST_API_TOKEN ?? process.env.UPSTASH_REDIS_REST_TOKEN;
-
-type RedisClient = import("@upstash/redis").Redis;
-let redis: RedisClient | undefined;
-
-async function getRedis(): Promise<RedisClient | undefined> {
-  if (!redisUrl || !redisToken) return undefined;
-  if (!redis) {
-    const { Redis } = await import("@upstash/redis");
-    redis = new Redis({
-      url: redisUrl,
-      token: redisToken,
-      automaticDeserialization: false,
-    });
-  }
-  return redis;
-}
-
-/** The sorted set that makes the register listable; score is `createdAt`. */
-const INDEX_KEY = "readers:index";
-const recordKey = (phone: string) => `reader:${phone}`;
+/**
+ * The sorted set that makes the register listable; score is `createdAt`.
+ *
+ * `appKey`, not `sharedKey`: this register is keyed on a phone number and
+ * carries District and Thana, which is a shape no other project writes. See
+ * `lib/redis` for why the distinction is spelled out at every call site.
+ */
+const INDEX_KEY = appKey("readers:index");
+const recordKey = (phone: string) => appKey(`reader:${phone}`);
 
 function readAll(): Record<string, ReaderRecord> {
   if (!existsSync(DATA_FILE)) return {};
