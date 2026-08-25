@@ -1,0 +1,6324 @@
+@import "tailwindcss";
+
+/* next-themes uses a class on <html>; wire it to Tailwind v4's dark variant. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ---------------------------------------------------------------
+   Design tokens (light)
+   Blush paper, a deep plum ink, and one pink that is dark enough to
+   act. This is a maternity library sponsored by a pharmaceutical
+   company, and those are two ways to get pink wrong: nursery pastel
+   on one side, clinical magenta on the other. The way through is to
+   keep the *ground* pale and the *accent* deep: the page is soft,
+   the one colour that means "act" is not.
+
+   Dark mode is a token swap only; no component ever overrides
+   colour per-theme.
+---------------------------------------------------------------- */
+:root {
+  --bg: #fdf0f4;
+  --bg-deep: #f8dfe7;
+  --surface: #fffafc;
+  --surface-2: #ffffff;
+
+  /* Plum, not black, and not pink. Body text at 13.5:1 on the blush ground,
+     so it is unambiguously readable, but warm enough that the page does not
+     read as pink paper with grey text printed on it by mistake. */
+  --ink: #4c1d33;
+  --ink-mute: #7b5566;
+  --ink-faint: #a98595;
+  --line: #f0cfda;
+  --line-soft: #f7e2e9;
+
+  /* Pink-700, not pink-500. The brighter pink is the prettier swatch and
+     fails on the only thing this colour has to do: white on #ec4899 is
+     3.0:1, under the 4.5:1 a button label needs. This one is 5.3:1. */
+  --accent: #be185d;
+  --accent-hover: #9d174d;
+  --accent-ink: #ffffff;
+  --accent-soft: #fce7f0;
+
+  /* The same brand pink for things that emit light rather than fill a shape:
+     the hero's rim light and its dust motes, the glow behind a panel, the
+     lamp on the Exium pack. A colour dark enough to carry white text is by
+     definition too dark to work as a light source: `--accent` as a PointLight
+     barely registers. */
+  --accent-lit: #f9a8d4;
+
+  /* The wordmark's gradient. A journey the eye reads as warmth travelling
+     into depth (coral, to pink, to the violet behind it) rather than three
+     tints of one pink, which at this width would read as a single flat
+     colour. */
+  --brand-1: #fb7185;
+  --brand-2: #ec4899;
+  --brand-3: #a21caf;
+
+  /* Card stock. The catalogue tile is a slab of paper that ramps through a
+     rose tint into a saturated foot, so the volume stands in colour and the
+     one control on the card is unmissable against it. `lip` is the lit top
+     bevel and `well-lift` the light behind the book: one token each instead
+     of a per-theme override in every card rule. */
+  --card-top: #fffdfe;
+  --card-mid: #fbdfe9;
+  --card-foot: #be185d;
+  --card-lip: rgba(255, 255, 255, 0.72);
+  --well-lift: rgba(255, 255, 255, 0.55);
+
+  /* Semantics stay legible against pink rather than harmonising with it. The
+     "ok" teal in particular is chosen to be the one thing on the page that
+     is *not* on the pink axis, so a success message cannot be mistaken for
+     branding. */
+  --ok: #0f766e;
+  --ok-soft: #d5f0ec;
+  --warn: #b45309;
+  --warn-soft: #fdecd3;
+  --danger: #be123c;
+  --danger-soft: #fce1e7;
+  --neutral: #7c6874;
+  --neutral-soft: #efe6ea;
+
+  /* Depth: plum-tinted, three stacked layers per step. A single flat
+     shadow reads as a 2010s card; stacked ones read as real depth. */
+  --shadow-1: 0 1px 2px rgba(94, 24, 60, 0.06), 0 2px 4px rgba(94, 24, 60, 0.04);
+  --shadow-2: 0 1px 2px rgba(94, 24, 60, 0.06), 0 4px 10px rgba(94, 24, 60, 0.07),
+    0 10px 20px rgba(94, 24, 60, 0.05);
+  --shadow-3: 0 2px 4px rgba(94, 24, 60, 0.07), 0 8px 18px rgba(94, 24, 60, 0.09),
+    0 20px 40px rgba(94, 24, 60, 0.08);
+  --shadow-4: 0 4px 8px rgba(94, 24, 60, 0.08), 0 16px 32px rgba(94, 24, 60, 0.1),
+    0 36px 68px rgba(94, 24, 60, 0.12);
+
+  /* The primary control's own shadow, tinted with the primary itself. A neutral
+     grey shadow under a saturated pill reads as dirt; the coloured one reads as
+     the button sitting above the page and is most of why a flat fill looks
+     modern rather than 2010s. Tight top layer for the edge, wide negative-spread
+     layer for the bloom. */
+  --shadow-accent: 0 1px 2px rgba(190, 24, 93, 0.26),
+    0 6px 14px -4px rgba(190, 24, 93, 0.4), 0 14px 30px -10px rgba(190, 24, 93, 0.5);
+  --shadow-accent-lg: 0 1px 2px rgba(190, 24, 93, 0.28),
+    0 10px 22px -6px rgba(190, 24, 93, 0.45),
+    0 22px 44px -12px rgba(190, 24, 93, 0.55);
+
+  --radius: 0.875rem;
+
+  /* ---------------------------------------------------------------
+     Motion.
+
+     Durations and curves in one place, because the thing that makes a
+     scroll narrative feel expensive is not any single animation: it is
+     that every animation on the page agrees about how long "a beat" is
+     and what deceleration feels like. Six numbers and five curves, used
+     everywhere; a component that invents its own timing is a bug.
+
+     `--dur-block` is the long one: a full section arriving. `--dur-title`
+     and `--stagger-title` are the masked-line reveal. `--dur-text` and
+     `--stagger-text` are the paragraph behind it, deliberately quicker and
+     more staggered so the body follows the heading rather than racing it.
+  --------------------------------------------------------------- */
+  --dur-fast: 0.2s;
+  --dur-normal: 0.4s;
+  --dur-slow: 1s;
+  --dur-block: 1.4s;
+  --dur-title: 1.4s;
+  --stagger-title: 0.02s;
+  --dur-text: 0.7s;
+  --stagger-text: 0.04s;
+
+  --ease-out: cubic-bezier(0.5, 0, 0.5, 1);
+  --ease-in: cubic-bezier(0.47, 0.04, 0.5, -0.06);
+  --ease-in-out: cubic-bezier(0.55, 0, 0.1, 1);
+  --ease-subtle: cubic-bezier(0.25, 0.1, 0.25, 1);
+  --ease-title: cubic-bezier(0.29, 0.52, 0.5, 1);
+}
+
+.dark {
+  --bg: #1a0d13;
+  --bg-deep: #120810;
+  --surface: #251320;
+  --surface-2: #301829;
+  --ink: #fce7f3;
+  --ink-mute: #c9a3b4;
+  --ink-faint: #8d6577;
+  --line: #3a1f2c;
+  --line-soft: #2c1621;
+
+  /* Pink-700 on this ground would read as a hole rather than a button. Lifted
+     to pink-300, the pill takes dark plum ink back instead of white, which is
+     what makes it read as lit rather than as a darker patch of page. */
+  --accent: #f9a8d4;
+  --accent-hover: #fbcfe8;
+  --accent-ink: #3f0f22;
+  --accent-soft: #3d1428;
+
+  /* Already bright enough to light with; lifted one more step so the rim still
+     separates from the pills that are now the same pink. */
+  --accent-lit: #fbcfe8;
+
+  /* Lifted, not just reused: the same three hues at this luminance would sink
+     into the dark ground and the gradient would read as one flat colour. */
+  --brand-1: #fda4af;
+  --brand-2: #f9a8d4;
+  --brand-3: #e879f9;
+
+  /* Same slab in a dimmer room. The foot keeps its full chroma (that block of
+     colour is the card's one bright object and the ground its button reads
+     against), while the stock above it goes to aubergine. */
+  --card-top: #2a1622;
+  --card-mid: #3c1c2d;
+  --card-foot: #db2777;
+  --card-lip: rgba(255, 255, 255, 0.05);
+  --well-lift: rgba(255, 255, 255, 0.05);
+
+  --ok: #5eead4;
+  --ok-soft: #12312f;
+  --warn: #fbbf24;
+  --warn-soft: #3a2a12;
+  --danger: #fda4af;
+  --danger-soft: #3d1620;
+  --neutral: #c4b2bb;
+  --neutral-soft: #33222b;
+
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-2: 0 2px 6px rgba(0, 0, 0, 0.45), 0 8px 18px rgba(0, 0, 0, 0.35);
+  --shadow-3: 0 4px 10px rgba(0, 0, 0, 0.5), 0 16px 32px rgba(0, 0, 0, 0.4);
+  --shadow-4: 0 8px 20px rgba(0, 0, 0, 0.55), 0 32px 60px rgba(0, 0, 0, 0.5);
+
+  /* Same idea, more bloom and less edge: on a dark ground the glow is the only
+     part of a shadow that is visible at all. */
+  --shadow-accent: 0 1px 2px rgba(0, 0, 0, 0.5),
+    0 8px 20px -6px rgba(249, 168, 212, 0.42),
+    0 16px 34px -12px rgba(249, 168, 212, 0.32);
+  --shadow-accent-lg: 0 1px 2px rgba(0, 0, 0, 0.5),
+    0 12px 26px -6px rgba(249, 168, 212, 0.48),
+    0 26px 50px -14px rgba(249, 168, 212, 0.38);
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-bg-deep: var(--bg-deep);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-ink: var(--ink);
+  --color-ink-mute: var(--ink-mute);
+  --color-ink-faint: var(--ink-faint);
+  --color-line: var(--line);
+  --color-line-soft: var(--line-soft);
+
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-lit: var(--accent-lit);
+
+  --color-brand-1: var(--brand-1);
+  --color-brand-2: var(--brand-2);
+  --color-brand-3: var(--brand-3);
+
+  --color-ok: var(--ok);
+  --color-ok-soft: var(--ok-soft);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-neutral: var(--neutral);
+  --color-neutral-soft: var(--neutral-soft);
+
+  --font-sans: var(--font-display), var(--font-bengali), ui-sans-serif, system-ui,
+    sans-serif;
+  --font-display: var(--font-display), var(--font-bengali), ui-sans-serif, sans-serif;
+  --font-bengali: var(--font-bengali), ui-sans-serif, sans-serif;
+  --font-reading: var(--font-serif-bengali), Georgia, "Times New Roman", serif;
+
+  --shadow-e1: var(--shadow-1);
+  --shadow-e2: var(--shadow-2);
+  --shadow-e3: var(--shadow-3);
+  --shadow-e4: var(--shadow-4);
+  --shadow-glow: var(--shadow-accent);
+  --shadow-glow-lg: var(--shadow-accent-lg);
+
+  --radius-xl: var(--radius);
+  --radius-2xl: 1.25rem;
+  --radius-3xl: 1.75rem;
+}
+
+* {
+  border-color: var(--line);
+}
+
+html {
+  scroll-behavior: smooth;
+  /* Bengali conjuncts need more vertical room than Latin. Set once here
+     rather than patching line-height per component. */
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  /* Aliases for hand-written CSS.
+     The families in the `@theme inline` block above are *not* available as
+     custom properties at runtime; that is what `inline` means: Tailwind
+     substitutes them into the utilities it generates and emits nothing to
+     `:root`. So `font-family: var(--font-reading)` in a hand-written rule
+     resolves to nothing and silently inherits the body's sans instead, which
+     is a failure with no error attached to it. These two are real properties,
+     declared on `body` because that is the element next/font puts its own
+     variables on, and every rule below that names a face uses one of them. */
+  --serif: var(--font-serif-bengali), Georgia, "Times New Roman", serif;
+  --grotesk: var(--font-display), var(--font-bengali), ui-sans-serif, sans-serif;
+
+  background: var(--bg);
+  color: #111111;
+  font-family: var(--font-display), var(--font-bengali), ui-sans-serif, system-ui,
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.dark body {
+  color: #f5f2ee;
+}
+
+/* Bengali text runs taller; opt in with .bn rather than globally
+   inflating Latin leading. */
+.bn {
+  font-family: var(--font-bengali), ui-sans-serif, sans-serif;
+  line-height: 1.75;
+}
+
+/* Bengali takes no letter-spacing: the script joins, and tracking pulls
+   conjuncts visually apart. The utilities that set it (tracking-[0.2em] on
+   eyebrows, -0.03em on headlines) are shared with the English layout, so this
+   overrides them wherever .bn is in play: one of the few places !important is
+   the correct tool. */
+.bn,
+.bn * {
+  letter-spacing: normal !important;
+}
+
+::selection {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+/* ---------------------------------------------------------------
+   The wordmark.
+
+   One gradient across the whole name. Three stops rather than two:
+   two would spend the whole width fading and read as a flat wash,
+   whereas holding orange through the middle and turning to rose
+   only at the end keeps the name saturated and legible while still
+   obviously being a gradient.
+---------------------------------------------------------------- */
+.brand-grad {
+  /* 100deg rather than 90: the slight diagonal moves the stops through
+     the middle of the glyphs instead of banding them horizontally. */
+  background-image: linear-gradient(
+    100deg,
+    var(--brand-1) 0%,
+    var(--brand-2) 42%,
+    var(--brand-3) 96%
+  );
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  /* Clipped text has no colour of its own, so anything that cannot paint
+     the gradient (forced colours, print, a very old engine) would render
+     nothing at all. These two put the ink back. */
+  -webkit-text-fill-color: transparent;
+}
+
+@supports not ((background-clip: text) or (-webkit-background-clip: text)) {
+  .brand-grad {
+    background-image: none;
+    color: var(--accent);
+    -webkit-text-fill-color: var(--accent);
+  }
+}
+
+@media (forced-colors: active), print {
+  .brand-grad {
+    background-image: none;
+    color: var(--ink);
+    -webkit-text-fill-color: currentColor;
+  }
+}
+
+/* The mark: three leaves standing in a rounded tile. The tile carries the
+   same gradient as the wordmark plus a soft glow, which is what keeps the
+   two halves of the lockup reading as one object. */
+.brand-mark {
+  background-image: linear-gradient(
+    140deg,
+    var(--brand-1) 0%,
+    var(--brand-2) 55%,
+    var(--brand-3) 100%
+  );
+  box-shadow:
+    0 1px 2px rgb(0 0 0 / 0.16),
+    0 6px 16px -6px var(--brand-2),
+    inset 0 1px 0 rgb(255 255 255 / 0.28);
+}
+
+/* ---------------------------------------------------------------
+   Book3D: the signature element.
+
+   A cover rendered as a real object: six faces of a bound volume (front
+   board, back board, spine, fore-edge of the text block, head, tail),
+   assembled from CSS 3D transforms. Pure CSS, GPU-composited, zero JS.
+
+   Geometry: the box spans z ∈ [-depth/2, +depth/2]. Every face is
+   authored as a flat rectangle in that plane and rotated onto its own
+   side, so changing --depth alone rebinds the whole object.
+
+   ## What makes it read as a book rather than as a lit box
+
+   Four things, and they are worth naming because each one is a small
+   pile of gradients that looks like decoration until you take it away:
+
+   1. **The square.** A cased book's boards are cut larger than the paper
+      inside them, so every edge of the text block is recessed behind a
+      lip of board. That is why the fore-edge, the head and the tail all
+      carry a strip of board colour at each end rather than running paper
+      to the corner. It is the single strongest cue in here.
+   2. **The groove.** The board hinges a few millimetres out from the
+      spine, and the channel it turns in holds a hard shadow with a lit
+      edge beside it. One dark line and one bright line, always.
+   3. **One light.** Everything is lit from the upper left: the key on the
+      board, the falloff to the lower right, the bright edge on the
+      fore-edge board, the shadow thrown down and to the right. A face
+      lit from one place reads as an object; faces lit from wherever
+      suited each of them read as a collage.
+   4. **Paper is not a hatch.** Leaves are drawn at three frequencies at
+      once, because a single repeating gradient at any pitch reads as
+      corduroy the moment the object is more than a thumbnail.
+
+   ## The showcase grade
+
+   `.book3d--showcase` is for the two places a single volume is the
+   subject of the screen: the arrivals spotlight and the catalogue's
+   room. It adds what a product shot has and a catalogue thumbnail
+   cannot afford: a slow travelling specular, a deeper two-part contact
+   shadow, and a floor reflection. All of it is scoped to that class
+   rather than given to every book on the page, because twelve books in
+   a grid each running a sheen animation is twelve composited layers
+   animating for no one's benefit.
+---------------------------------------------------------------- */
+.book3d {
+  perspective: 1500px;
+  /* Camera sits slightly above centre, which is what makes the head
+     of the book visible and reads as "on a table in front of you". */
+  perspective-origin: 50% 34%;
+  /* The body.
+
+     `--thick` arrives from the component as a share of the book's own width
+     (see the note on `thickness` in `book-3d.tsx`) and `100cqw` is what turns
+     it into a length, which is why this element is a container. Depth in
+     pixels was the same number at every size, so a volume drawn at 330px had
+     the spine of one drawn at 140px and read as a printed cover with an edge
+     rather than as a book. Everything below still says `var(--depth)` and
+     none of it cares where the number came from. */
+  container-type: inline-size;
+  --depth: calc(var(--thick, 0.09) * 100cqw);
+  /* The board colour, and the shade of it that the boards' cut edges
+     show. Declared here so every face reads the same two values rather
+     than each one mixing its own. */
+  --board: var(--spine-color, #4a3524);
+  --board-edge: color-mix(in srgb, var(--spine-color, #4a3524) 76%, #000);
+  /* Paper. Warm, and never white: a white text block against a coloured
+     board is the tell of a rendering rather than a photograph. */
+  --leaf: #efe8db;
+  --leaf-mid: #d3c8b4;
+  --leaf-deep: #bbb09b;
+}
+
+.book3d__inner {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  transform-style: preserve-3d;
+  transform: rotateY(var(--ry, -22deg)) rotateX(var(--rx, 3deg))
+    translateZ(0);
+  transition: transform 680ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+
+/* The back board. Nothing is printed on it and it is only ever glimpsed,
+   but without it the box is open at the back and a rotation past about
+   twenty degrees looks through the object. */
+.book3d__inner::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateZ(calc(var(--depth, 26px) / -2));
+  background: linear-gradient(
+    to left,
+    var(--board-edge),
+    color-mix(in srgb, var(--board) 88%, #000) 55%,
+    var(--board-edge)
+  );
+  border-radius: 7px 2px 2px 7px;
+}
+
+.book3d:hover .book3d__inner,
+.book3d:focus-within .book3d__inner {
+  /* The book turns toward the reader and lifts off the surface. */
+  transform: rotateY(var(--ry-hover, -6deg)) rotateX(0deg)
+    translateY(-6px) translateZ(14px);
+}
+
+/* --- Front board ------------------------------------------------ */
+.book3d__face {
+  position: absolute;
+  inset: 0;
+  /* Tight radius at the spine, generous at the fore-edge: exactly how a
+     bound board is trimmed. */
+  border-radius: 2px 7px 7px 2px;
+  overflow: hidden;
+  backface-visibility: hidden;
+  transform: translateZ(calc(var(--depth, 26px) / 2));
+  box-shadow: var(--shadow-3);
+}
+
+/* The light on the board, painted over the artwork the way light falls on
+   a printed cover: a broad key from the upper left, and the room's own
+   darkness gathering in the lower right corner. Kept to a fifth of full
+   white at its brightest, because the layer under this one is somebody's
+   photograph and the job here is to light it, not to wash it. */
+.book3d__face::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  border-radius: inherit;
+  background:
+    /* The board's own cut edges. The bottom one is the base the book stands
+       on, so it is a hard shadow with a lit sliver above it; the top one only
+       catches light. Two hairlines, and they are most of what stops the cover
+       reading as a printed rectangle: a board has thickness, and thickness is
+       visible at the edge it rests on. */
+    linear-gradient(
+      to top,
+      rgba(0, 0, 0, 0.45) 0 1px,
+      rgba(0, 0, 0, 0.22) 1px 2px,
+      rgba(255, 255, 255, 0.12) 2px 3px,
+      transparent 3px 100%
+    ),
+    linear-gradient(
+      to bottom,
+      rgba(255, 255, 255, 0.22) 0 1px,
+      transparent 1px 100%
+    ),
+    radial-gradient(
+      125% 90% at 10% 2%,
+      rgba(255, 255, 255, 0.2),
+      rgba(255, 255, 255, 0.05) 42%,
+      transparent 62%
+    ),
+    linear-gradient(202deg, transparent 46%, rgba(18, 6, 12, 0.24) 100%);
+}
+
+/* The groove. One hard shadow in the channel, one lit edge on the board
+   just outside it, and the ambient occlusion that always lives in there. */
+.book3d__hinge {
+  position: absolute;
+  inset-block: 0;
+  left: 0;
+  width: 16%;
+  z-index: 2;
+  pointer-events: none;
+  background:
+    /* The lit outer edge of the channel. Hairline, and the whole reason
+       the groove reads as a channel rather than as a smudge. */
+    linear-gradient(
+      to right,
+      transparent 0 12%,
+      rgba(255, 255, 255, 0.16) 12% 14%,
+      transparent 14% 100%
+    ),
+    linear-gradient(
+      to right,
+      rgba(0, 0, 0, 0.5) 0%,
+      rgba(0, 0, 0, 0.3) 9%,
+      rgba(0, 0, 0, 0.06) 55%,
+      transparent 100%
+    );
+}
+
+/* The fore-edge of the board: a lit sliver where the light catches the
+   cut edge, and immediately inside it the shadow the board's own lip
+   throws onto the paper below. */
+.book3d__lip {
+  position: absolute;
+  inset-block: 0;
+  right: 0;
+  width: 5px;
+  z-index: 2;
+  pointer-events: none;
+  background: linear-gradient(
+    to left,
+    rgba(255, 255, 255, 0.42) 0 1px,
+    rgba(255, 255, 255, 0.12) 1px 2px,
+    rgba(0, 0, 0, 0.12) 2px 3px,
+    transparent 3px 100%
+  );
+}
+
+/* --- Spine ------------------------------------------------------ */
+.book3d__spine {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: var(--depth, 26px);
+  transform-origin: left center;
+  transform: rotateY(-90deg) translateX(calc(var(--depth, 26px) / -2));
+  background:
+    /* Head and tail caps, and the raised bands of a cased binding. */
+    linear-gradient(
+      to bottom,
+      rgba(255, 255, 255, 0.14) 0 3%,
+      transparent 3% 8%,
+      rgba(0, 0, 0, 0.18) 8% 9%,
+      transparent 9% 91%,
+      rgba(0, 0, 0, 0.18) 91% 92%,
+      transparent 92% 97%,
+      rgba(255, 255, 255, 0.1) 97% 100%
+    ),
+    /* The barrel. A spine is a half-cylinder, so the light on it is a
+       narrow specular a little off the near edge with falloff both ways,
+       not a linear ramp. Every color-mix percentage stays <= 100: above
+       that the function is invalid and the whole background is dropped. */
+    linear-gradient(
+      to right,
+      color-mix(in srgb, var(--board) 54%, #000) 0%,
+      color-mix(in srgb, var(--board) 68%, #000) 12%,
+      color-mix(in srgb, var(--board) 92%, #fff) 38%,
+      color-mix(in srgb, var(--board) 78%, #fff) 48%,
+      var(--board) 68%,
+      color-mix(in srgb, var(--board) 62%, #000) 100%
+    );
+  border-radius: 3px 0 0 3px;
+}
+
+/* --- Fore-edge of the text block --------------------------------
+   Recessed behind the boards at both ends, which is what the two strips
+   of board colour are; concave between them, because a closed block is
+   never flat; and drawn at three frequencies so it reads as paper.
+   ---------------------------------------------------------------- */
+.book3d__pages {
+  position: absolute;
+  top: 1.4%;
+  right: 0;
+  height: 97.2%;
+  width: var(--depth, 26px);
+  transform-origin: right center;
+  transform: rotateY(90deg) translateX(calc(var(--depth, 26px) / 2));
+  background:
+    /* The boards, seen edge on, with the shadow each one casts into the
+       paper it overhangs. */
+    linear-gradient(
+      to right,
+      var(--board-edge) 0 7%,
+      rgba(0, 0, 0, 0.34) 7% 11%,
+      transparent 11% 89%,
+      rgba(0, 0, 0, 0.3) 89% 93%,
+      color-mix(in srgb, var(--board) 66%, #000) 93% 100%
+    ),
+    /* Concave: darkest where the block meets each board, lightest a
+       third of the way in from the front, where the light reaches. */
+    linear-gradient(
+      to right,
+      rgba(0, 0, 0, 0.26) 6%,
+      rgba(255, 255, 255, 0.07) 32%,
+      rgba(0, 0, 0, 0.12) 62%,
+      rgba(0, 0, 0, 0.32) 94%
+    ),
+    /* Gatherings: groups of leaves, at a pitch nothing else here uses. */
+    repeating-linear-gradient(
+      to right,
+      transparent 0 6px,
+      rgba(0, 0, 0, 0.07) 6px 7px,
+      transparent 7px 11px
+    ),
+    /* Leaves. Two pitches beating against each other, so no run of them
+       ever falls into a regular stripe. */
+    repeating-linear-gradient(
+      to right,
+      var(--leaf) 0 1px,
+      var(--leaf-mid) 1px 1.5px,
+      var(--leaf) 1.5px 2.5px,
+      var(--leaf-deep) 2.5px 3px
+    ),
+    repeating-linear-gradient(
+      to right,
+      transparent 0 3.5px,
+      rgba(0, 0, 0, 0.05) 3.5px 4px
+    ),
+    linear-gradient(var(--leaf), var(--leaf));
+  border-radius: 0 2px 2px 0;
+}
+
+/* --- Head (top edge) -------------------------------------------
+   Only visible because the camera is above centre, and it is the single
+   biggest contributor to the object reading as solid rather than as a
+   rotated rectangle. Paper here curves down into the gutter, which is
+   what the dark wash at the spine end is.
+   ---------------------------------------------------------------- */
+.book3d__head {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: var(--depth, 26px);
+  transform-origin: center top;
+  transform: translateZ(calc(var(--depth, 26px) / -2)) rotateX(90deg);
+  background:
+    /* Board thickness at the front and back of the block, each with the
+       shadow it casts onto the paper. */
+    linear-gradient(
+      to bottom,
+      var(--board) 0 7%,
+      rgba(0, 0, 0, 0.3) 7% 10%,
+      transparent 10% 90%,
+      rgba(0, 0, 0, 0.26) 90% 93%,
+      var(--board-edge) 93% 100%
+    ),
+    /* The gutter: the leaves turn down into the spine and the light does
+       not follow them. */
+    radial-gradient(
+      120% 150% at 0% 50%,
+      rgba(0, 0, 0, 0.62),
+      rgba(0, 0, 0, 0.18) 34%,
+      transparent 62%
+    ),
+    /* A soft key across the block, so the top is not a flat field. */
+    linear-gradient(
+      to right,
+      transparent 20%,
+      rgba(255, 255, 255, 0.16) 52%,
+      transparent 88%
+    ),
+    /* Finer than the fore-edge's, because this face is seen much more
+       nearly flat on: at the same pitch it read as corrugated iron. */
+    repeating-linear-gradient(
+      to bottom,
+      var(--leaf) 0 0.75px,
+      var(--leaf-mid) 0.75px 1px,
+      var(--leaf) 1px 1.75px,
+      color-mix(in srgb, var(--leaf-mid) 70%, var(--leaf-deep)) 1.75px 2px
+    ),
+    linear-gradient(var(--leaf), var(--leaf));
+  border-radius: 2px 3px 0 0;
+}
+
+/* --- Tail (bottom edge) ---------------------------------------- */
+.book3d__tail {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: var(--depth, 26px);
+  transform-origin: center bottom;
+  transform: translateZ(calc(var(--depth, 26px) / -2)) rotateX(-90deg);
+  background:
+    linear-gradient(
+      to top,
+      var(--board) 0 7%,
+      rgba(0, 0, 0, 0.34) 7% 10%,
+      transparent 10% 90%,
+      rgba(0, 0, 0, 0.3) 90% 93%,
+      var(--board-edge) 93% 100%
+    ),
+    radial-gradient(
+      120% 150% at 0% 50%,
+      rgba(0, 0, 0, 0.66),
+      rgba(0, 0, 0, 0.2) 34%,
+      transparent 62%
+    ),
+    repeating-linear-gradient(
+      to bottom,
+      var(--leaf-mid) 0 0.75px,
+      var(--leaf-deep) 0.75px 1px,
+      var(--leaf-mid) 1px 1.75px,
+      var(--leaf-deep) 1.75px 2px
+    ),
+    linear-gradient(var(--leaf-mid), var(--leaf-mid));
+  /* The tail sits in its own shade: no light reaches under a book. */
+  filter: brightness(0.8);
+  border-radius: 0 0 3px 2px;
+}
+
+/* Contact shadow on the ground plane, sold separately from the box-shadow
+   so it can splay as the book turns and lifts. Two parts, because a real
+   one has two: a small dense core where the object nearly touches, and a
+   wide soft ambient occlusion around it. The core is the `box-shadow` and
+   the ambient is the gradient, which is also the cheap way round: one
+   blurred layer instead of two. Offset to the right, because the light is
+   at the upper left and has been all the way down this section. */
+.book3d__shadow {
+  position: absolute;
+  left: 2%;
+  right: 0%;
+  bottom: -8%;
+  height: 15%;
+  border-radius: 50%;
+  background: radial-gradient(
+    ellipse at 46% 46%,
+    rgba(61, 45, 32, 0.4),
+    rgba(61, 45, 32, 0.14) 46%,
+    transparent 74%
+  );
+  box-shadow: 0 2px 10px 2px rgba(61, 45, 32, 0.22);
+  filter: blur(11px);
+  transform: translateZ(-34px);
+  transition: opacity 680ms ease, transform 680ms ease, filter 680ms ease;
+}
+
+.book3d:hover .book3d__shadow,
+.book3d:focus-within .book3d__shadow {
+  /* Lifted object: shadow spreads, softens and loses density. */
+  transform: translateZ(-34px) translateY(7px) scale(1.06, 0.86);
+  filter: blur(16px);
+  opacity: 0.72;
+}
+
+.dark .book3d__shadow {
+  background: radial-gradient(
+    ellipse at 46% 46%,
+    rgba(0, 0, 0, 0.7),
+    rgba(0, 0, 0, 0.24) 46%,
+    transparent 74%
+  );
+  box-shadow: 0 2px 12px 3px rgba(0, 0, 0, 0.4);
+}
+
+/* Specular sweep across the cover: laminated-board finish. Travels as the
+   book turns, which is what makes the rotation feel lit rather than
+   animated. Two bands, a wide soft one and a hard narrow one just inside
+   it, which is what a sheet of laminate does that a single gradient
+   does not. */
+.book3d__glare {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  background: linear-gradient(
+    105deg,
+    transparent 24%,
+    rgba(255, 255, 255, 0.1) 36%,
+    rgba(255, 255, 255, 0.3) 44%,
+    rgba(255, 255, 255, 0.06) 50%,
+    rgba(255, 255, 255, 0.14) 56%,
+    transparent 66%
+  );
+  opacity: 0.9;
+  pointer-events: none;
+  transition: transform 680ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.book3d:hover .book3d__glare,
+.book3d:focus-within .book3d__glare {
+  transform: translateX(18%);
+}
+
+/* --- The showcase grade -----------------------------------------
+   For the two places one volume is the subject of the screen. Nothing
+   here changes the object; it changes the room it is standing in.
+   ---------------------------------------------------------------- */
+
+/* A shorter lens and a little more of the top. Fifteen hundred pixels of
+   perspective on a 250px object is a long lens: nearly parallel edges, very
+   little foreshortening, which is right for a grid of twelve where the
+   volumes should look like a set. A single volume standing on its own wants
+   the opposite, because a product shot is taken from close up: the near
+   corner is bigger than the far one, the top edge falls away, and the
+   object reads as being in the room rather than printed on the page. */
+.book3d--showcase {
+  perspective: 1050px;
+  --rx: 6deg;
+}
+
+/* A deeper, wider pool, sitting further under the book. A single volume
+   at 300px needs a shadow that reads at 300px, and the grid's does not. */
+.book3d--showcase .book3d__shadow {
+  left: -6%;
+  right: -8%;
+  bottom: -8%;
+  height: 20%;
+  filter: blur(16px);
+  background: radial-gradient(
+    ellipse at 46% 44%,
+    rgba(24, 8, 16, 0.5),
+    rgba(24, 8, 16, 0.2) 44%,
+    transparent 76%
+  );
+  /* The tight core, where the base nearly touches the ground. Without it a
+     soft pool alone reads as fog under a floating object. */
+  box-shadow: 0 2px 8px 0 rgba(24, 8, 16, 0.42),
+    0 6px 26px 8px rgba(24, 8, 16, 0.26);
+}
+
+.dark .book3d--showcase .book3d__shadow {
+  background: radial-gradient(
+    ellipse at 46% 44%,
+    rgba(0, 0, 0, 0.78),
+    rgba(0, 0, 0, 0.3) 44%,
+    transparent 76%
+  );
+}
+
+/* The board catches a little more light when it is the only thing lit. */
+.book3d--showcase .book3d__face::after {
+  background:
+    radial-gradient(
+      125% 92% at 8% 0%,
+      rgba(255, 255, 255, 0.26),
+      rgba(255, 255, 255, 0.07) 40%,
+      transparent 60%
+    ),
+    linear-gradient(202deg, transparent 42%, rgba(18, 6, 12, 0.3) 100%);
+}
+
+/* The floor. A reflection is the one thing that says "this object is
+   standing on something" without drawing the something, which is exactly
+   what a product shot on a seamless ground does. `-webkit-box-reflect`
+   is the only way to get it without a second copy of the artwork in the
+   markup; it is Chromium and WebKit only, so it is a bonus rather than a
+   requirement and it is asked for rather than assumed. */
+@supports (-webkit-box-reflect: below) {
+  /* On the root, and that is not a detail: on `.book3d__inner` this
+     flattened the object. `-webkit-box-reflect` renders its subject into a
+     buffer to mirror it, which collapses the 3D rendering context it is
+     applied to, so all six faces composited into one plane in DOM order and
+     the front board painted over every side of the box. The result was a
+     picture of a cover with edge highlights on it: exactly the "flat" look
+     this grade was added to fix. Applied to `.book3d` instead, the
+     perspective and the preserve-3d chain both live inside the subject and
+     what gets mirrored is the finished object.
+
+     Measured, because "looks fine" is how it shipped flat the first time:
+     with the reflection on `.book3d__inner` the fore-edge of the text block
+     was 0px wide on screen, and on `.book3d` it is 9px. */
+  /* And only where the ground is dark. A mirrored copy under an object
+     says "polished floor", which the catalogue's room is and the arrivals
+     section, on pale paper, is not: there it read as a second, upside-down
+     book lying under the first one. The arrivals volume keeps the rest of
+     the grade. */
+  .cine .book3d--showcase {
+    -webkit-box-reflect: below 1px
+      linear-gradient(transparent 52%, rgba(255, 255, 255, 0.22));
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* The travelling specular. Slow, and on a period that shares no factor
+     with the float underneath it, so the two never sync into a single
+     pulse. Only in the showcase: twelve of these in a grid would be
+     twelve animated composited layers for a highlight nobody is looking
+     at. */
+  .book3d--showcase .book3d__glare {
+    animation: book-sheen 13s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+  }
+
+  @keyframes book-sheen {
+    0%,
+    100% {
+      transform: translateX(-14%);
+      opacity: 0.55;
+    }
+    45% {
+      transform: translateX(16%);
+      opacity: 1;
+    }
+    55% {
+      transform: translateX(18%);
+      opacity: 0.95;
+    }
+  }
+}
+
+/* ---------------------------------------------------------------
+   Shelf3D: a row of spines standing on a plank, seen straight on
+   with a shallow tilt. Gives categories and the admin dashboard the
+   same physical vocabulary as the covers.
+---------------------------------------------------------------- */
+.shelf3d {
+  perspective: 900px;
+  perspective-origin: 50% 120%;
+}
+
+.shelf3d__row {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  transform-style: preserve-3d;
+  transform: rotateX(var(--shelf-rx, 6deg));
+}
+
+.shelf3d__spine {
+  position: relative;
+  overflow: hidden;
+  border-radius: 2px 2px 0 0;
+  box-shadow: inset -2px 0 3px rgba(0, 0, 0, 0.28),
+    inset 2px 0 2px rgba(255, 255, 255, 0.12);
+  transition: transform 380ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.shelf3d__row:hover .shelf3d__spine {
+  transform: translateY(2px);
+}
+
+.shelf3d__row:hover .shelf3d__spine:hover {
+  /* The hovered volume is pulled up out of the row, as you would to read it. */
+  transform: translateY(-8px) rotateX(-4deg);
+}
+
+/* The plank: a front rail plus the shadow the books drop onto it. */
+.shelf3d__plank {
+  position: relative;
+  height: 10px;
+  border-radius: 2px;
+  background: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--line) 60%, var(--ink)) 0 2px,
+    var(--line) 2px 60%,
+    color-mix(in srgb, var(--line) 70%, var(--ink)) 100%
+  );
+  box-shadow: 0 6px 12px -6px rgba(61, 45, 32, 0.5);
+}
+
+.shelf3d__plank::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 4px;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.3), transparent);
+}
+
+/* ---------------------------------------------------------------
+   Tile3D: the depth treatment for stat tiles and panels. A tile is
+   a slab: lit top bevel, dark bottom bevel, and it presses in when
+   pointed at.
+---------------------------------------------------------------- */
+.tile3d {
+  position: relative;
+  box-shadow: var(--shadow-2), inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    inset 0 -1px 0 rgba(61, 45, 32, 0.06);
+  transition: transform 320ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 320ms ease;
+}
+
+.dark .tile3d {
+  box-shadow: var(--shadow-2), inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.4);
+}
+
+.tile3d:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-3), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+.dark .tile3d:hover {
+  box-shadow: var(--shadow-3), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+/* ---------------------------------------------------------------
+   Book card: the catalogue tile.
+
+   A peach-lit slab with the volume standing in it. Three things do
+   the work: warm gradient stock (paper, not #fff), one soft glow
+   behind the cover so the book looks lit from the front of the
+   shelf, and a single unhurried lift on hover that the book's own
+   turn rides on top of. Every colour is a token, so dark mode is a
+   swap and no card rule is written twice.
+
+   The lift lives here rather than on the element carrying
+   `.reveal-3d`: a filled scroll-driven animation owns `transform`
+   for good, and would silently eat the hover.
+---------------------------------------------------------------- */
+.book-card {
+  position: relative;
+  isolation: isolate;
+  /* Pale where the type is, saturated where the button is. The ramp holds its
+     top tone through the record so nothing is ever read against a gradient,
+     then turns over the length of the cover. */
+  background-image: linear-gradient(
+    180deg,
+    var(--card-top) 0%,
+    var(--card-top) 44%,
+    var(--card-mid) 68%,
+    var(--card-foot) 98%
+  );
+  box-shadow: var(--shadow-1), inset 0 1px 0 var(--card-lip);
+  transition: transform 520ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 520ms ease, border-color 320ms ease;
+}
+
+.book-card:hover,
+.book-card:focus-within {
+  transform: translateY(-6px);
+  /* The lifted card throws its own colour onto the page: the halo the
+     reference card sits in, and the reason it reads as a lit object. */
+  box-shadow: var(--shadow-3), 0 22px 44px -22px var(--card-foot),
+    inset 0 1px 0 var(--card-lip);
+  border-color: color-mix(in srgb, var(--accent) 34%, var(--line));
+}
+
+/* Light behind the volume. Without it the pale covers sink into the saturated
+   half of the ramp; with it they read as standing in front of the colour. */
+.book-card__well::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    78% 58% at 50% 30%,
+    var(--well-lift),
+    transparent 74%
+  );
+  opacity: 0.75;
+  transition: opacity 520ms ease;
+}
+
+.book-card:hover .book-card__well::before,
+.book-card:focus-within .book-card__well::before {
+  opacity: 1;
+}
+
+/* Featured volumes carry the wordmark's gradient as a rail along the top
+   edge: the same mark, so "featured" needs no second colour of its own. */
+.book-card__rail {
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  height: 2.5px;
+  z-index: 1;
+  background-image: linear-gradient(
+    100deg,
+    var(--brand-1) 0%,
+    var(--brand-2) 48%,
+    var(--brand-3) 100%
+  );
+}
+
+/* ---------------------------------------------------------------
+   View transitions.
+
+   The book covers in the grid and on the detail page are one paired
+   <ViewTransition name="cover-…">, so opening a book moves that
+   object rather than cutting between two pages. Only the timing and
+   the mid-flight blur are set here: the geometry is the browser's.
+---------------------------------------------------------------- */
+::view-transition-group(.morph) {
+  animation-duration: 420ms;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+::view-transition-image-pair(.morph) {
+  /* Hides the pixel interpolation while a 90px cover becomes a 280px one. */
+  animation-name: morph-blur;
+}
+
+@keyframes morph-blur {
+  30% {
+    filter: blur(3px);
+  }
+}
+
+/* ---------------------------------------------------------------
+   Scroll-driven reveal.
+
+   Two classes, one timeline. `.reveal` is the flat rise, for small
+   things inside an already-revealed block. `.reveal-3d` is the
+   section move: the block comes up off the page and tips upright
+   about its own bottom edge, which is the same physical language as
+   the books, objects with a front and a back, lit from above.
+
+   Both are driven by `animation-timeline: view()`, so progress is
+   scroll position, not elapsed time: scrub back up and the motion
+   runs backwards. There are no scroll listeners anywhere in the app,
+   and nothing runs on the main thread.
+
+   Tunable per element, because a rail of twelve cards and a full
+   section want different pacing:
+     --lag   how far into its own entry the element waits, in %.
+             Set from the grid index to cascade a row.
+     --span  how much scrolling the move takes, in %. Short for tall
+             sections (their entry phase is a whole section tall),
+             longer for small tiles.
+---------------------------------------------------------------- */
+.reveal,
+.reveal-3d {
+  --lag: 0;
+  --span: 46%;
+}
+
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .reveal,
+    .reveal-3d {
+      animation: reveal-in linear both;
+      animation-timeline: view();
+      animation-range: entry calc(var(--lag) * 1%) entry
+        calc(var(--lag) * 1% + var(--span));
+    }
+
+    .reveal-3d {
+      animation-name: reveal-3d-in;
+      /* Hinged at the foot, so the block stands up rather than pivoting
+         through its own middle. */
+      transform-origin: 50% 100%;
+    }
+  }
+}
+
+@keyframes reveal-in {
+  from {
+    opacity: 0;
+    transform: translateY(28px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes reveal-3d-in {
+  from {
+    opacity: 0;
+    /* translateZ does the scaling: pushing the block away under a real
+       perspective, rather than a scale() that would just shrink it. */
+    transform: perspective(1500px) translate3d(0, 46px, -130px) rotateX(9deg);
+  }
+  to {
+    opacity: 1;
+    transform: perspective(1500px) translate3d(0, 0, 0) rotateX(0deg);
+  }
+}
+
+.shelf-tilt {
+  transform: perspective(1600px) rotateX(9deg) rotateZ(-1.2deg);
+}
+
+/* Fine dotted paper texture; costs nothing and stops large warm areas
+   from looking like flat #E9E5E1. */
+.paper-grain {
+  background-image: radial-gradient(
+    rgba(61, 45, 32, 0.055) 1px,
+    transparent 1px
+  );
+  background-size: 22px 22px;
+}
+
+.dark .paper-grain {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+}
+
+/* ---------------------------------------------------------------
+   The entrance.
+
+   A curtain in the page's own ground with the mark and the name on
+   it, a rule that fills as the page becomes ready, and then a zoom
+   through the counter of the mark (the small disc cradled in the
+   arc), which opens into the page behind.
+
+   Two mechanics, and they have to stay in step.
+
+   The **fill** is one custom property, `--fill`, written by the
+   component every frame. It drives the rule's width and the name's
+   own mask, so the type reveals at exactly the rate the progress
+   claims. Two separate animations here would drift, and a wordmark
+   that is 80% revealed under a rule that says 60% reads as broken
+   even when nobody can say why.
+
+   The **aperture** is a radial-gradient mask on the curtain whose
+   transparent centre grows while the whole stage scales up about
+   that same point. `transform-origin` is the disc's centre in the
+   mark's own 48-unit box: 50% across, and 24% down the stage, which
+   is where `circle cy="11.4"` lands once the mark is laid out below
+   the name. Move the disc in `BrandArt` and this has to move too;
+   they are the same point expressed twice and there is no way to
+   derive one from the other in CSS.
+
+   The scale is the whole trick. It is exponential rather than
+   linear (1 → 34), because a linear zoom decelerates visually as it
+   goes (each frame covers a smaller *proportion* of the last), and
+   the shape of an exponential in screen terms is a constant rate of
+   approach. It is the difference between flying through the hole and
+   watching a circle get bigger.
+--------------------------------------------------------------- */
+.intro {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: grid;
+  place-items: center;
+  background: var(--bg);
+  --fill: 0%;
+  /* The aperture, closed. `transparent` to `#000` over three pixels rather
+     than at a hard stop: a one-pixel step in a mask aliases into a visible
+     staircase as it scales. */
+  --hole: 0px;
+  -webkit-mask-image: radial-gradient(
+    circle at 50% 24%,
+    transparent var(--hole),
+    #000 calc(var(--hole) + 3px)
+  );
+  mask-image: radial-gradient(
+    circle at 50% 24%,
+    transparent var(--hole),
+    #000 calc(var(--hole) + 3px)
+  );
+}
+
+.intro__stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  /* The disc in the mark, in stage coordinates. See the note above. */
+  transform-origin: 50% 24%;
+  will-change: transform;
+}
+
+.intro__mark {
+  width: clamp(4.5rem, 9vw, 6.5rem);
+  height: auto;
+  /* The mark's paths are white (they are drawn to sit on the brand tile), so
+     on a bare curtain it needs the tile behind it. Same gradient as the
+     favicon, same three tokens as the wordmark. */
+  border-radius: 22%;
+  background: linear-gradient(
+    135deg,
+    var(--brand-1) 0%,
+    var(--brand-2) 55%,
+    var(--brand-3) 100%
+  );
+  box-shadow: var(--shadow-accent-lg);
+}
+
+/* The name, revealed by the same number that drives the rule.
+   `background-clip: text` with a gradient stop at `--fill` is a wipe rather
+   than a fade: the letters arrive fully formed, left to right, which is what
+   makes it read as printing rather than as loading. */
+.intro__name {
+  margin-top: 0.5rem;
+  font-size: clamp(1.75rem, 5.5vw, 3.25rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  text-align: center;
+  background-image: linear-gradient(
+    90deg,
+    var(--ink) 0%,
+    var(--ink) var(--fill),
+    color-mix(in oklab, var(--ink) 14%, transparent) calc(var(--fill) + 4%),
+    color-mix(in oklab, var(--ink) 14%, transparent) 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.intro__tagline {
+  font-size: clamp(0.82rem, 1.6vw, 0.98rem);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  text-align: center;
+}
+
+.intro__rule {
+  margin-top: 0.5rem;
+  width: min(18rem, 46vw);
+  height: 2px;
+  border-radius: 999px;
+  background: var(--line);
+  overflow: hidden;
+  position: relative;
+}
+
+.intro__rule::after {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: var(--fill);
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--brand-1), var(--brand-3));
+}
+
+/* The zoom. One transition on the stage and one on the mask, the same
+   duration and the same curve, started together by the `data-leaving` flip,
+   so the hole opens exactly as fast as the stage grows and the edge of the
+   aperture stays welded to the edge of the disc.
+
+   `--hole` is in viewport units so it outgrows the longest diagonal of any
+   window: 120vmax is comfortably past the corner even on an ultrawide, and a
+   mask that stops short leaves a ring of curtain on screen. */
+.intro[data-leaving="true"] {
+  --hole: 120vmax;
+  transition: -webkit-mask-image 1500ms cubic-bezier(0.7, 0, 0.84, 0),
+    mask-image 1500ms cubic-bezier(0.7, 0, 0.84, 0);
+}
+
+.intro[data-leaving="true"] .intro__stage {
+  transform: scale(34);
+  opacity: 0;
+  /* Opacity fades over the back half only. Fading from the start would dim
+     the mark before the zoom has visibly begun, and the point is that the page
+     is arriving through it rather than instead of it. */
+  transition: transform 1500ms cubic-bezier(0.7, 0, 0.84, 0),
+    opacity 700ms linear 800ms;
+}
+
+/* Nothing renders under reduced motion (the component returns null), so
+   there is no faded variant to define here. This rule is the belt to that
+   braces: if the curtain is ever rendered anyway, it must not animate and it
+   must not trap the page behind it. */
+@media (prefers-reduced-motion: reduce) {
+  .intro {
+    display: none;
+  }
+}
+
+/* ---------------------------------------------------------------
+   The sponsor's advert.
+
+   A card with a product in it, and the whole design problem is
+   restraint: this sits beside a chapter on postpartum haemorrhage
+   and it must not be the loudest thing on the page. So: no border
+   the eye catches, no accent fill, one hairline rule, and the pack
+   itself carries its own colour because it is a photograph of
+   someone's packaging and not ours to retint.
+
+   `--dur-*` and `--ease-*` come from the motion tokens at the top
+   of this file. Nothing here invents its own timing.
+--------------------------------------------------------------- */
+.exium-ad {
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--radius-2xl, 1.25rem);
+  border: 1px solid var(--line-soft);
+  /* A shade off `--surface`, so the card reads as an inset panel rather than
+     as another content block. On a page that is already pale pink, a white
+     card would be the brightest object on it. */
+  background: linear-gradient(180deg, var(--surface) 0%, var(--bg-deep) 100%);
+  padding: 1.25rem 1.25rem 1rem;
+  box-shadow: var(--shadow-1);
+}
+
+.exium-ad__eyebrow {
+  color: var(--ink-faint);
+}
+
+/* The stage holds the still and the canvas in one square, exactly on top of
+   each other. `aspect-ratio` rather than a height, so the canvas has a size to
+   observe before the scene ever asks for one: a ResizeObserver on a
+   zero-height box reports zero and the camera divides by it. */
+.exium-ad__stage {
+  position: relative;
+  margin: 0.75rem 0 0.25rem;
+  aspect-ratio: 4 / 3;
+  width: 100%;
+}
+
+.exium-ad__still,
+.exium-ad__canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* The still fades out as the canvas fades in, over the same beat, so there is
+   one crossfade rather than a flicker of both or a gap between them. */
+.exium-ad__still {
+  transition: opacity var(--dur-slow) var(--ease-out);
+}
+
+.exium-ad[data-live="true"] .exium-ad__still {
+  opacity: 0;
+}
+
+.exium-ad__canvas {
+  opacity: 0;
+  transition: opacity var(--dur-slow) var(--ease-out);
+}
+
+.exium-ad[data-live="true"] .exium-ad__canvas {
+  opacity: 1;
+}
+
+.exium-ad__product {
+  margin-top: 0.5rem;
+  font-weight: 700;
+  font-size: 1.05rem;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+
+.exium-ad__generic {
+  font-size: 0.85rem;
+  color: var(--ink-mute);
+}
+
+/* Present from the first paint so the block below it never shifts, and given
+   its text only once the canvas is live. An empty line that reserves its own
+   height is cheaper than a layout jump. */
+.exium-ad__hint {
+  min-height: 1.4em;
+  margin-top: 0.5rem;
+  font-size: 0.76rem;
+  color: var(--accent);
+}
+
+.exium-ad__company {
+  margin-top: 0.5rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--line-soft);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--ink-mute);
+}
+
+.exium-ad__note {
+  margin-top: 0.25rem;
+  font-size: 0.7rem;
+  line-height: 1.5;
+  color: var(--ink-faint);
+}
+
+/* The footer strip. Flat by design: see the note in `components/exium-ad.tsx`
+   about not spending a WebGL context on a slot this size. */
+.exium-strip {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--line-soft);
+  background: var(--surface);
+  padding: 0.875rem 1.125rem;
+}
+
+.exium-strip__pack {
+  width: 5.5rem;
+  height: auto;
+  flex-shrink: 0;
+}
+
+@media (min-width: 640px) {
+  .exium-strip__pack {
+    width: 7rem;
+  }
+}
+
+/* Reduced motion: the still is the advert, so there is nothing to disable
+   except the crossfade. The scene is never downloaded (the component asks the
+   same question from script), and this rule is what makes that safe to rely on
+   if it ever is. */
+@media (prefers-reduced-motion: reduce) {
+  .exium-ad__still {
+    opacity: 1 !important;
+    transition: none;
+  }
+
+  .exium-ad__canvas {
+    display: none;
+  }
+}
+
+/* ---------------------------------------------------------------
+   Closing CTA: volumes adrift over paper.
+
+   This section used to be a solid near-black slab. A black rectangle is
+   the loudest object on a page whether or not what sits on it deserves
+   to be, and in dark mode it stopped reading as a panel at all: it read
+   as a hole cut in the page. Paper instead, lit by two pools of the brand
+   green, with four of the library's own volumes drifting behind the copy:
+   the section now sells the library by showing it rather than by shouting.
+
+   The volumes are decoration in the strict sense; `aria-hidden`, and
+   `pointer-events: none` so a book floating behind a heading can never
+   swallow the click meant for the one button here. Everything they say
+   ("there are books, they are objects, they are yours") the copy beside
+   them says in words.
+---------------------------------------------------------------- */
+.ctafloat {
+  position: relative;
+  /* Contains the stacking context, so the drifting volumes can sit behind
+     the copy without escaping to fight the header for z-order. */
+  isolation: isolate;
+  overflow: hidden;
+  background: var(--surface);
+}
+
+/* Two pools of light rather than one flat fill: a bright one high-left
+   where the key light in every other 3D block on this page comes from,
+   and a deeper one low-right for the volume to fall away into. */
+.ctafloat::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      62% 78% at 14% 6%,
+      color-mix(in srgb, var(--accent-lit) 26%, transparent) 0%,
+      transparent 68%
+    ),
+    radial-gradient(
+      54% 70% at 92% 96%,
+      color-mix(in srgb, var(--accent) 22%, transparent) 0%,
+      transparent 70%
+    );
+}
+
+.ctafloat__body {
+  position: relative;
+  /* Above both the wash and the volumes. */
+  z-index: 2;
+}
+
+/* One drifting volume. Position, size, tilt, and timing all come in as
+   custom properties from the markup, so this rule is authored once and
+   the four instances differ only in their variables: a second copy of
+   these declarations per volume is how a composition like this rots. */
+.ctafloat__drift {
+  position: absolute;
+  z-index: 1;
+  left: var(--x);
+  top: var(--y);
+  width: var(--w);
+  pointer-events: none;
+  /* The far pair sit back in the frame. Losing a little contrast and a
+     little focus is what reads as distance: scaling them down alone just
+     reads as smaller books at the same distance. */
+  opacity: var(--dim, 1);
+  filter: blur(var(--soft, 0px));
+  transform: rotate(var(--tilt, 0deg));
+  animation: ctafloat-drift var(--dur, 13s) ease-in-out var(--delay, 0s)
+    infinite;
+}
+
+/* Transform and opacity only, and the pose at 100% is the pose at 0%, so
+   the reduced-motion switch above, which collapses every duration to
+   nothing, leaves the composition standing as authored instead of frozen
+   mid-drift. The rotation rides on top of the resting tilt rather than
+   replacing it, which is why `--tilt` is read here again. */
+@keyframes ctafloat-drift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) rotate(var(--tilt, 0deg));
+  }
+  50% {
+    transform: translate3d(0, -19px, 0)
+      rotate(calc(var(--tilt, 0deg) + 1.6deg));
+  }
+}
+
+/* ---------------------------------------------------------------
+   Accessibility: one global kill-switch for every 3D / motion effect.
+---------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* Kill the cover morph too: a 280px object flying across the viewport is
+     exactly what this preference is asking us not to do. */
+  ::view-transition-group(.morph),
+  ::view-transition-image-pair(.morph) {
+    animation: none !important;
+  }
+
+  .book3d__inner,
+  .book3d:hover .book3d__inner,
+  .book3d:focus-within .book3d__inner {
+    transform: none !important;
+  }
+
+  .book3d__spine,
+  .book3d__pages,
+  .book3d__head,
+  .book3d__tail,
+  .book3d__glare,
+  .book3d__hinge,
+  .book3d__lip,
+  .book3d__shadow {
+    display: none !important;
+  }
+
+  .book3d__face {
+    transform: none !important;
+  }
+
+  .shelf3d__row,
+  .shelf3d__spine,
+  .shelf3d__row:hover .shelf3d__spine,
+  .shelf3d__row:hover .shelf3d__spine:hover,
+  .tile3d:hover,
+  .book-card:hover,
+  .book-card:focus-within,
+  .shelf-tilt {
+    /* Zeroed transition durations would otherwise turn every lift into an
+       instant jump, which is worse than no lift at all. */
+    transform: none !important;
+  }
+}
+
+/* ---------------------------------------------------------------
+   Recently added: the arrivals, one at a time.
+
+   The section pins and the newest books step through it: the record
+   on the left, the volume turning on the right, a number counting in
+   the corner. The collection scroll above pans sideways through six
+   shelves; this holds one place and changes what is standing in it.
+
+   ## One timeline, again
+
+   Same architecture as the collection: a single named view timeline
+   on the track,
+
+       view-timeline-name: --arrivals
+
+   and every part takes its slice of it through `animation-range`.
+   `contain 0%` to `contain 100%` is the sticky period exactly (the
+   argument is written out in the collection's section above), so
+   arrival `i` of `n` owns `i/n` to `(i+1)/n` of it and nothing can
+   drift out of step with the pin.
+
+   ## Why the window is two inherited custom properties
+
+   `--win-a` and `--win-b` are set inline on `.arrivals__step` by
+   `arrivals-scroll.tsx`, and four different elements build their
+   `animation-range` out of them. They have to be custom properties
+   rather than an inline `animation-range` because one of those
+   elements is `.book3d__inner`, three levels down inside a component
+   this section does not own: `animation-range` does not inherit, and
+   custom properties do. It also means the window for a record and the
+   turn of its volume cannot be given different numbers by mistake.
+
+   ## The stack, and what stops it swallowing clicks
+
+   Pinned, all `n` records are absolutely positioned in one cell, so
+   the invisible ones lie over the visible one. The keyframes that fade
+   a record also raise its `z-index` and turn its `pointer-events`
+   back on, so exactly one record is hit-testable at a time. Both,
+   because either alone leaves a hole: `pointer-events` is a discrete
+   property and flips at the midpoint of a fade, and `z-index` alone
+   would still let a transparent record above take the click.
+
+   Records stay at `opacity: 0` rather than `visibility: hidden` on
+   purpose. This is the only place these titles appear, and a screen
+   reader should be able to read all of them; `visibility` would have
+   solved the click problem more cheaply and hidden five records from
+   anyone not scrolling.
+
+   ## The fallback is the default
+
+   Everything enhanced lives in one `@supports` / `@media` block at
+   the end. The rules here are the stack: ordinary records in document
+   order, no pin, no rail, no atmosphere. That is what a phone gets,
+   what a reader who asked for less motion gets, and what a browser
+   without scroll-driven animations gets, with no script involved in
+   the decision and so no flash of the wrong one.
+---------------------------------------------------------------- */
+.arrivals {
+  position: relative;
+  border-block: 1px solid color-mix(in oklab, var(--line) 60%, transparent);
+  background: var(--bg);
+}
+
+.arrivals__track {
+  --steps: 4;
+  position: relative;
+}
+
+/* Only ever a scroll target, and only once the track is long enough to
+   have somewhere to scroll to. */
+.arrivals__marker {
+  display: none;
+}
+
+.arrivals__frame {
+  margin-inline: auto;
+  width: 100%;
+  /* Narrow, because stacked this is a column of records to read down and a
+     record whose volume is a screen's width away from its own title is two
+     things rather than one. The pinned presentation widens it again. */
+  max-width: 68rem;
+  padding: 4.5rem 1.25rem 5rem;
+}
+
+@media (min-width: 640px) {
+  .arrivals__frame {
+    padding-inline: 2.5rem;
+  }
+}
+
+/* --- The section's frame ------------------------------------------ */
+.arrivals__head {
+  display: grid;
+  gap: 1.75rem;
+}
+
+.arrivals__eyebrow {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.arrivals__heading {
+  margin-top: 0.7rem;
+  font-family: var(--serif);
+  font-size: clamp(2rem, 5vw, 3.2rem);
+  font-weight: 400;
+  letter-spacing: -0.015em;
+  line-height: 1.04;
+  color: var(--ink);
+}
+
+.arrivals__lead {
+  margin-top: 0.9rem;
+  max-width: 32rem;
+  line-height: 1.65;
+  color: var(--ink-mute);
+}
+
+.arrivals__aside {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+/* Hidden until the section is pinned: a "1 / 4" over a stack of four
+   records that are all on screen is counting something the reader can
+   already see. */
+.arrivals__tally {
+  display: none;
+}
+
+.arrivals__all {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--ink);
+  transition: color var(--dur-normal) var(--ease-subtle);
+}
+
+.arrivals__all:hover {
+  color: var(--accent);
+}
+
+/* --- One arrival -------------------------------------------------- */
+.arrivals__stage {
+  position: relative;
+  margin-top: 3rem;
+  display: grid;
+  gap: 3rem;
+}
+
+.arrivals__step {
+  display: grid;
+  gap: 2.25rem;
+  align-items: center;
+  border-top: 1px solid var(--line-soft);
+  padding-top: 2.75rem;
+}
+
+.arrivals__step:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+@media (min-width: 720px) {
+  .arrivals__step {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 15rem);
+    gap: 3rem;
+  }
+}
+
+.arrivals__record {
+  position: relative;
+  max-width: 34rem;
+}
+
+.arrivals__code {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  color: var(--ink);
+}
+
+.arrivals__title {
+  margin-top: 0.9rem;
+  font-family: var(--serif);
+  font-size: clamp(1.9rem, 4vw, 3rem);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 1.06;
+  color: var(--ink);
+  /* Long institutional titles are the norm here, not the exception:
+     three lines of display type, then the record's note carries on. */
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.arrivals__stop {
+  color: var(--accent);
+}
+
+.arrivals__by {
+  margin-top: 0.7rem;
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 1.02rem;
+  color: var(--ink-mute);
+}
+
+.arrivals__note {
+  margin-top: 1.1rem;
+  max-width: 30rem;
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: var(--ink-mute);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* --- The spec sheet ------------------------------------------------
+   A figure, its unit, then what it counts. The reference sets a dose
+   this way and it suits a book just as well: the numbers line up in
+   their own column and read as a specification rather than as prose.
+   ---------------------------------------------------------------- */
+.arrivals__spec {
+  margin-top: 1.6rem;
+  border-top: 1px solid var(--line-soft);
+  padding-top: 1rem;
+  display: grid;
+  gap: 0.45rem;
+  max-width: 22rem;
+}
+
+.arrivals__spec-row {
+  display: grid;
+  grid-template-columns: 5.5rem minmax(0, 1fr);
+  align-items: baseline;
+  gap: 0.75rem;
+}
+
+.arrivals__spec-value {
+  display: flex;
+  align-items: baseline;
+  gap: 0.28rem;
+}
+
+.arrivals__spec-figure {
+  font-family: var(--serif);
+  font-size: 1.05rem;
+  color: var(--ink);
+}
+
+.arrivals__spec-unit {
+  font-size: 0.6rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.arrivals__spec-label {
+  font-size: 0.82rem;
+  color: var(--ink-mute);
+}
+
+.arrivals__total {
+  margin-top: 1.1rem;
+  border-top: 1px solid var(--line-soft);
+  padding-top: 0.9rem;
+  max-width: 22rem;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.arrivals__total-label {
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.arrivals__total-value {
+  font-family: var(--serif);
+  font-size: 1.05rem;
+  color: var(--ink);
+}
+
+/* --- The two controls --------------------------------------------- */
+.arrivals__foot {
+  margin-top: 1.6rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.arrivals__open {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  padding: 0.6rem 1.15rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  box-shadow: var(--shadow-accent);
+  transition: background var(--dur-normal) var(--ease-subtle),
+    transform var(--dur-normal) var(--ease-subtle);
+}
+
+.arrivals__open:hover {
+  background: var(--accent-hover);
+  transform: translateY(-1px);
+}
+
+.arrivals__take {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0.6rem 1.05rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--ink);
+  transition: border-color var(--dur-normal) var(--ease-subtle),
+    color var(--dur-normal) var(--ease-subtle);
+}
+
+.arrivals__take:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* --- The object ---------------------------------------------------
+   Decorative, and permanently untouchable: the record beside it holds
+   every fact it shows, and `!important` here is what stops the shared
+   fade keyframes (which do hand `pointer-events` back to a current
+   record) from letting a ghost numeral take a click.
+   ---------------------------------------------------------------- */
+.arrivals__object {
+  position: relative;
+  display: grid;
+  place-items: center;
+  pointer-events: none !important;
+}
+
+.arrivals__vol {
+  position: relative;
+  z-index: 2;
+  width: clamp(140px, 34vw, 200px);
+}
+
+/* Atmosphere. All of it needs room to read as atmosphere rather than as
+   clutter, so none of it exists until the section is pinned. */
+.arrivals__ghost,
+.arrivals__bloom,
+.arrivals__ring,
+.arrivals__tag {
+  display: none;
+}
+
+/* --- The rail ----------------------------------------------------- */
+.arrivals__rail {
+  display: none;
+}
+
+/* ---------------------------------------------------------------
+   BookGrid3D: a grid of standing 3D books with label below.
+
+   Each cell: a 3D volume (handled by .book3d) + title + author.
+   The whole cell is a link. Hover lifts and turns the book via the
+   existing .book3d hover rules: no extra JS needed.
+---------------------------------------------------------------- */
+.book-grid-3d {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.75rem 1.25rem;
+}
+
+@media (min-width: 480px) {
+  .book-grid-3d {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 768px) {
+  .book-grid-3d {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2.5rem 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .book-grid-3d {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
+
+@media (min-width: 1280px) {
+  .book-grid-3d {
+    grid-template-columns: repeat(6, 1fr);
+  }
+}
+
+.book-grid-3d__cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  text-decoration: none;
+  animation: reveal-rise 500ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  animation-delay: calc(var(--lag, 0) * 20ms);
+}
+
+@keyframes reveal-rise {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+
+.book-grid-3d__vol {
+  /* Give Book3D room to lift on hover without clipping */
+  padding-top: 0.5rem;
+  padding-inline: 0.25rem;
+  overflow: visible;
+}
+
+.book-grid-3d__label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding-inline: 0.25rem;
+}
+
+.book-grid-3d__title {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--ink);
+  transition: color 200ms ease;
+}
+
+.book-grid-3d__cell:hover .book-grid-3d__title,
+.book-grid-3d__cell:focus-visible .book-grid-3d__title {
+  color: var(--accent);
+}
+
+.book-grid-3d__author {
+  font-size: 0.68rem;
+  color: var(--ink-faint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .book-grid-3d__cell {
+    animation: none;
+  }
+}
+
+/* ---------------------------------------------------------------
+   Lenis: the inertial scroller.
+
+   Copied from `lenis/dist/lenis.css` rather than imported, because this
+   file is the app's only stylesheet and a second one arriving from
+   `node_modules` behind a dynamic import is a rule nobody would think to
+   look for. Four rules, and each earns its place:
+
+   `height: auto` because Lenis needs the document to be its natural
+   height rather than a viewport-locked one. `overflow: clip` while
+   stopped so a locked page cannot be scrolled by other means. The
+   `data-lenis-prevent` contain rule so a scrollable panel inside the
+   page (the reader's page list) does not chain its overscroll out to
+   the smoothed window. And `pointer-events: none` on iframes, without
+   which a cross-origin frame swallows the wheel events Lenis is reading.
+
+   Nothing here applies until Lenis is actually running: it puts the
+   `lenis` class on `<html>` itself. See `lib/smooth-scroll.ts` for why
+   there is only ever one of it.
+--------------------------------------------------------------- */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+
+.lenis:not(.lenis-autoToggle).lenis-stopped {
+  overflow: clip;
+}
+
+.lenis [data-lenis-prevent],
+.lenis [data-lenis-prevent-wheel],
+.lenis [data-lenis-prevent-touch] {
+  overscroll-behavior: contain;
+}
+
+.lenis.lenis-smooth iframe {
+  pointer-events: none;
+}
+
+/* ---------------------------------------------------------------
+   Collection scroll: the six chapters.
+
+   The page stops and the collection moves through it. Vertical scroll
+   pans a row of six full-screen chapters sideways under a sticky
+   viewport; each one arrives with its own photograph, its name rising
+   through a mask, and three or four of its books.
+
+   ## The one timeline
+
+   Every animation in this section (the pan, six background parallaxes,
+   six masked titles, twenty-odd covers) hangs off a single named view
+   timeline declared on `.collection__track`:
+
+       view-timeline-name: --collection
+
+   and each animation takes the slice of it that it wants through
+   `animation-range`. That is the whole architecture, and it is worth
+   being clear about why it has to be this way rather than the `view()`
+   timelines the rest of the app uses.
+
+   `view()` measures an element's own position against the scrollport. It
+   is exactly right for a card rising into place, and useless here,
+   because *nothing in this section moves through the scrollport*. The
+   pin is stuck; the chapters move by `transform`, and transforms do not
+   affect a view timeline. So there is one timeline, belonging to the one
+   element that really does travel (the track), and every part is placed
+   along it by range instead.
+
+   ## Why `contain`
+
+   `animation-range: contain 0% → contain 100%` is not an approximation
+   of the sticky period. It *is* the sticky period. For a subject taller
+   than the scrollport, the `contain` range runs from the moment the
+   subject completely covers the scrollport to the moment it stops doing
+   so, which are precisely the moments `position: sticky` grabs and lets
+   go. The pan and the pin cannot drift apart, because they are the same
+   two instants.
+
+   Chapter `i` is therefore centred at `i / (n - 1)` of the range, and
+   the per-chapter `--from` / `--to` / `--bg-from` / `--bg-to` values are
+   worked out from that in `collection-scroll.tsx`: CSS cannot know `n`.
+
+   ## The fallback is the default
+
+   Everything above lives inside one `@supports` / `@media` block. The
+   base rules below it are the vertical stack: six ordinary sections,
+   full width, in document order, rail hidden. That is what a phone gets,
+   what a reader who asked for less motion gets, and what a browser
+   without scroll-driven animations gets, without a flash of a
+   3,000-pixel-tall section first, because no script is involved in the
+   decision.
+--------------------------------------------------------------- */
+.collection {
+  position: relative;
+  border-block: 1px solid color-mix(in oklab, var(--line) 60%, transparent);
+  background: var(--bg-deep);
+}
+
+.collection__intro {
+  margin-inline: auto;
+  max-width: 80rem;
+  padding: 5rem 1.25rem 0;
+}
+
+@media (min-width: 1024px) {
+  .collection__intro {
+    padding-inline: 2rem;
+  }
+}
+
+.collection__eyebrow {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.collection__heading {
+  margin-top: 0.75rem;
+  font-size: clamp(1.9rem, 4vw, 2.9rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  color: var(--ink);
+}
+
+.collection__lead {
+  margin-top: 0.85rem;
+  max-width: 36rem;
+  line-height: 1.65;
+  color: var(--ink-mute);
+}
+
+/* --- The track ---------------------------------------------------
+   Stacked by default. `--chapters` is set inline by the component and
+   is what makes the enhanced height and the row width agree.
+   ---------------------------------------------------------------- */
+.collection__track {
+  --chapters: 6;
+  position: relative;
+  margin-top: 3rem;
+}
+
+.collection__pin {
+  position: relative;
+}
+
+.collection__row {
+  display: grid;
+  gap: 1px;
+}
+
+/* --- One chapter -------------------------------------------------- */
+.chapter {
+  position: relative;
+  display: grid;
+  gap: 2rem;
+  align-content: center;
+  overflow: hidden;
+  padding: 4rem 1.25rem;
+  isolation: isolate;
+}
+
+@media (min-width: 640px) {
+  .chapter {
+    padding-inline: 2.5rem;
+  }
+}
+
+.chapter__bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  /* Each chapter's photograph fades out before the chapter's own edge.
+     Six full-bleed panels butted together draw a hard vertical line across
+     the screen every time the pan crosses a boundary, and a hard line that
+     nothing in the design accounts for reads as a bug rather than as an
+     edge. Fading both sides to nothing means two chapters meet on the
+     page's own ground, and the pan reads as one continuous surface with
+     photographs on it instead of as a slideshow.
+
+     The mask is on this element and the parallax is on the image inside
+     it, and that division is load-bearing: a transform moves an element's
+     mask along with it, so a mask on the drifting photo would have its
+     fade pushed outside the visible box by the same 14% the photo is
+     scaled up, and clip hard instead. This element never moves, so the
+     fade stays where the chapter's edges are. */
+  mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    #000 7%,
+    #000 93%,
+    transparent 100%
+  );
+}
+
+.chapter__img {
+  object-fit: cover;
+  /* The photographs are already duotoned to the palette by
+     `scripts/build-chapter-art.mjs`, which is what lets them sit this
+     strong: there is no colour in them to clash with the page, so they
+     can be present as photographs rather than as a texture. Anything
+     much below this and the treatment work is wasted: a chapter reads
+     as a flat pink panel with a ghost in it. */
+  opacity: 0.72;
+}
+
+.dark .chapter__img {
+  /* A light duotone over a dark page is the same problem in reverse:
+     at full strength the photograph becomes the brightest thing on the
+     screen and the heading disappears into it. */
+  opacity: 0.46;
+}
+
+/* The ground under the type.
+   Weighted hard toward the side the copy is on and almost absent on the
+   other, so the two halves of the chapter get what each needs: the
+   heading gets a ground to be legible against, and the photograph gets
+   to be seen. A flat wash over the whole panel cannot do both: it is
+   either too weak to read type over or too strong to see through. */
+.chapter__veil {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background:
+    /* Behind the copy, and only there: running to nothing at both edges,
+       where `.chapter__bg`'s mask has already faded the photograph out. The
+       two chapters therefore meet on plain page ground on both sides of the
+       join, with nothing to draw a line. */
+    linear-gradient(
+      100deg,
+      color-mix(in oklab, var(--bg) 0%, transparent) 0%,
+      color-mix(in oklab, var(--bg) 70%, transparent) 9%,
+      color-mix(in oklab, var(--bg) 44%, transparent) 40%,
+      color-mix(in oklab, var(--bg) 0%, transparent) 72%,
+      color-mix(in oklab, var(--bg) 0%, transparent) 100%
+    ),
+    /* A uniform wash under all of it. Costs some contrast on the photograph
+       and buys the same amount everywhere, which is the trade that keeps the
+       boundary invisible. */
+    linear-gradient(
+      color-mix(in oklab, var(--bg) 24%, transparent),
+      color-mix(in oklab, var(--bg) 24%, transparent)
+    ),
+    linear-gradient(
+      to top,
+      color-mix(in oklab, var(--bg-deep) 52%, transparent),
+      transparent 40%
+    );
+}
+
+.chapter__body {
+  position: relative;
+  z-index: 2;
+  max-width: 34rem;
+}
+
+.chapter__eyebrow {
+  display: flex;
+  align-items: baseline;
+  gap: 0.85rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.chapter__n {
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- The masked title --------------------------------------------
+   One clip box per word. The negative margin and the equal positive
+   padding cancel out, so the type sits exactly where it would have,
+   but the clip box is inflated by that much on every side, which is
+   what stops a descender (the "g" of "Pregnancy") being sheared off by
+   its own mask. Bengali needs the room even more than Latin does.
+   ---------------------------------------------------------------- */
+.chapter__title {
+  margin-top: 1rem;
+  font-size: clamp(2.1rem, 5.2vw, 4rem);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.04;
+  color: var(--ink);
+  text-wrap: balance;
+}
+
+.chapter__title.bn {
+  line-height: 1.3;
+  letter-spacing: 0;
+}
+
+.chapter__word {
+  display: inline-block;
+  overflow: hidden;
+  margin: -0.16em;
+  padding: 0.16em;
+  /* Keeps the inflated clip boxes of two stacked lines from overlapping
+     into each other's glyphs. */
+  vertical-align: bottom;
+}
+
+.chapter__word > span {
+  display: inline-block;
+  will-change: transform;
+}
+
+.chapter__lead {
+  margin-top: 1.15rem;
+  max-width: 30rem;
+  font-size: 1.02rem;
+  line-height: 1.7;
+  color: var(--ink-mute);
+}
+
+.chapter__count {
+  margin-top: 1.1rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.chapter__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin-top: 1.6rem;
+  border-bottom: 1px solid color-mix(in oklab, var(--accent) 45%, transparent);
+  padding-bottom: 0.3rem;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--accent);
+  transition: gap 200ms var(--ease-out), border-color 200ms ease;
+}
+
+.chapter__cta:hover {
+  gap: 0.9rem;
+  border-color: var(--accent);
+}
+
+/* --- The books ---------------------------------------------------- */
+.chapter__books {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  list-style: none;
+  padding: 0;
+}
+
+.chapter__book {
+  width: clamp(104px, 21vw, 152px);
+}
+
+.chapter__book-link {
+  display: block;
+  border-radius: 0.5rem;
+}
+
+.chapter__book-link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 6px;
+}
+
+/* --- The rail ----------------------------------------------------
+   Hidden in the stacked presentation: six sections already in document
+   order do not need an index pointing at them, and a fixed side nav
+   over them is clutter.
+   ---------------------------------------------------------------- */
+.collection__rail {
+  display: none;
+}
+
+.collection__counter {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-faint);
+}
+
+.collection__counter-now {
+  font-size: 1.15rem;
+  color: var(--accent);
+}
+
+.collection__counter-rule {
+  display: block;
+  width: 1.4rem;
+  height: 1px;
+  background: currentcolor;
+}
+
+.collection__dots {
+  display: grid;
+  gap: 0.9rem;
+  list-style: none;
+  padding: 0;
+}
+
+.collection__dot {
+  display: block;
+  width: 1.4rem;
+  height: 1.4rem;
+  padding: 0.5rem;
+  cursor: pointer;
+  /* The hit area is 1.4rem; the visible dot is the 0.4rem box inside it.
+     A 6px target is not a target. */
+  background: none;
+  border: 0;
+}
+
+.collection__dot::before {
+  content: "";
+  display: block;
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--ink) 30%, transparent);
+  transition: background 250ms ease, scale 250ms var(--ease-out);
+}
+
+.collection__dot:hover::before {
+  background: color-mix(in oklab, var(--accent) 70%, transparent);
+}
+
+.collection__dot[data-current="true"]::before {
+  background: var(--accent);
+  scale: 1.9;
+}
+
+.collection__dot:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 999px;
+}
+
+/* =================================================================
+   The enhanced presentation: pinned, horizontal, scroll-driven.
+
+   Everything above is the fallback. Nothing below applies unless the
+   browser has scroll-driven animations, the viewport is wide enough for
+   a full-screen chapter to be worth having, and the reader has not asked
+   for less motion.
+   ================================================================= */
+@supports (animation-timeline: view()) {
+  @media (min-width: 768px) and (prefers-reduced-motion: no-preference) {
+    .collection__track {
+      /* One viewport of scroll per chapter, plus a little so the last one
+         is held rather than passed through. The pan is scrubbed against
+         this height, so it is also the pacing knob: taller is slower. */
+      height: calc((var(--chapters) + 0.35) * 100svh);
+      view-timeline-name: --collection;
+      view-timeline-axis: block;
+      margin-top: 0;
+    }
+
+    .collection__pin {
+      position: sticky;
+      top: 0;
+      height: 100svh;
+      overflow: hidden;
+    }
+
+    .collection__row {
+      display: flex;
+      align-items: stretch;
+      height: 100%;
+      width: calc(var(--chapters) * 100vw);
+      animation: collection-pan linear both;
+      animation-timeline: --collection;
+      animation-range: contain 0% contain 100%;
+      will-change: transform;
+    }
+
+    /* A hairline of sub-pixel background shows between two 100vw children
+       at some zoom levels. The reference site solves it the same way. */
+    .chapter + .chapter {
+      margin-left: -1px;
+    }
+
+    .chapter {
+      flex: 0 0 auto;
+      width: 100vw;
+      height: 100%;
+      gap: 0;
+      /* Opaque, and no clipping. Both matter, and both are about the join
+         between two chapters. `100vw` rarely divides into a whole number of
+         pixels, so a chapter's edges land at fractional positions; clipping a
+         composited layer (the drifting photograph, which `will-change` puts on
+         its own layer) at a fractional edge makes Chrome draw a one-pixel dark
+         line down the join. There is nothing left to clip anyway: the mask on
+         `.chapter__bg` already ends the photograph inside the box, and with an
+         opaque ground on each chapter, a half-covered pixel at the boundary is
+         the same colour as both of its neighbours. */
+      overflow: visible;
+      background: var(--bg-deep);
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      align-items: center;
+      padding: 0 clamp(2rem, 6vw, 7rem);
+    }
+
+    .chapter__body {
+      max-width: 32rem;
+    }
+
+    /* Standing in the right half, at slightly different heights so the row
+       reads as books on a surface rather than as a row of tiles. */
+    .chapter__books {
+      justify-content: center;
+      align-items: flex-end;
+      gap: clamp(0.75rem, 2vw, 1.75rem);
+      padding-left: clamp(1rem, 4vw, 3rem);
+    }
+
+    .chapter__book {
+      width: clamp(126px, 12.5vw, 196px);
+    }
+
+    .chapter__book:nth-child(even) {
+      margin-bottom: clamp(1rem, 4vh, 3rem);
+    }
+
+    /* --- The pan ------------------------------------------------- */
+    @keyframes collection-pan {
+      from {
+        transform: translate3d(0, 0, 0);
+      }
+      to {
+        /* The row is `--chapters × 100vw` wide and one viewport of it is
+           visible, so this lands the last chapter exactly on screen. */
+        transform: translate3d(calc(-100% + 100vw), 0, 0);
+      }
+    }
+
+    /* --- Background parallax ------------------------------------
+       The photograph drifts the other way across the chapter's time on
+       screen, passing through its resting offset as the chapter is
+       centred. Scaled up first, so the drift never exposes an edge. --- */
+    /* Every animation below names its keyframes and this one timeline, and
+       nothing else. The `animation-range` for each is set inline by
+       `collection-scroll.tsx`, because where a part sits on the timeline
+       depends on how many chapters, words and covers there are: see
+       `chapterTiming` there. An inline range with no animation-name is inert,
+       which is exactly why the fallback presentation needs no undoing. */
+    .chapter__img {
+      animation: chapter-drift linear both;
+      animation-timeline: --collection;
+      will-change: transform;
+    }
+
+    @keyframes chapter-drift {
+      from {
+        transform: scale(1.14) translate3d(4.5%, 0, 0);
+      }
+      to {
+        transform: scale(1.14) translate3d(-4.5%, 0, 0);
+      }
+    }
+
+    /* --- The masked title ---------------------------------------
+       Each word slides up out of its own clip box, staggered by index.
+       The stagger is expressed as a fraction of the chapter's slice
+       rather than in seconds, because on a scroll timeline there are no
+       seconds: `--stagger-title` is not usable here, and a word's
+       "delay" is a slice of scroll. --------------------------------- */
+    .chapter__word > span {
+      animation: word-rise linear both;
+      animation-timeline: --collection;
+    }
+
+    @keyframes word-rise {
+      from {
+        transform: translate3d(0, 108%, 0);
+      }
+      to {
+        transform: translate3d(0, 0, 0);
+      }
+    }
+
+    /* The copy under the heading follows it rather than racing it: one
+       block, a little later, no per-word masking. Body text sliced into
+       words is affectation. */
+    .chapter__eyebrow,
+    .chapter__lead,
+    .chapter__count,
+    .chapter__cta {
+      animation: chapter-copy linear both;
+      animation-timeline: --collection;
+    }
+
+    @keyframes chapter-copy {
+      from {
+        opacity: 0;
+        transform: translate3d(0, 20px, 0);
+      }
+      to {
+        opacity: 1;
+        transform: translate3d(0, 0, 0);
+      }
+    }
+
+    /* --- The covers ---------------------------------------------
+       Arriving on a shallow plane: pushed back under a real perspective
+       and turned a few degrees more than they rest at, so they settle
+       into their angle rather than fading in at it. Staggered by `--lag`,
+       set from the index by the component.
+       ---------------------------------------------------------------- */
+    .chapter__book {
+      animation: cover-arrive linear both;
+      animation-timeline: --collection;
+      will-change: transform, opacity;
+    }
+
+    @keyframes cover-arrive {
+      from {
+        opacity: 0;
+        transform: perspective(1400px) translate3d(0, 34px, -220px)
+          rotateY(-14deg);
+      }
+      to {
+        opacity: 1;
+        transform: perspective(1400px) translate3d(0, 0, 0) rotateY(0deg);
+      }
+    }
+
+    /* --- The rail ------------------------------------------------- */
+    .collection__rail {
+      position: absolute;
+      z-index: 6;
+      right: clamp(1rem, 3vw, 2.75rem);
+      top: 50%;
+      translate: 0 -50%;
+      display: grid;
+      gap: 1.4rem;
+      justify-items: center;
+    }
+  }
+}
+
+/* A wide viewport with reduced motion asked for still gets the stacked
+   presentation above, but a chapter at full height with no motion in it
+   is a lot of empty room, so it is given a floor instead of a screen. */
+@media (min-width: 768px) {
+  .chapter {
+    min-height: 24rem;
+  }
+}
+
+/* =================================================================
+   The enhanced presentation: pinned, cross-faded, scroll-driven.
+
+   Everything above is the fallback. Nothing below applies unless the
+   browser has scroll-driven animations, the viewport is wide enough
+   to stand a book beside a record, and the reader has not asked for
+   less motion.
+   ================================================================= */
+@supports (animation-timeline: view()) {
+  @media (min-width: 1024px) and (min-height: 560px) and (prefers-reduced-motion: no-preference) {
+    .arrivals__track {
+      /* Rather less than a viewport of scroll per arrival, plus a tail
+         so the last one is held rather than passed through. This is the
+         pacing knob: taller is slower. */
+      height: calc((var(--steps) + 0.55) * 100svh);
+      view-timeline-name: --arrivals;
+      view-timeline-axis: block;
+    }
+
+    /* Where arrival `i` is composed, as a fraction of the track's own
+       scrollable length, which is the same fraction the timeline is at.
+       So the rail's anchors land the pan exactly where the CSS puts it,
+       with no measuring and no script. */
+    .arrivals__marker {
+      display: block;
+      position: absolute;
+      left: 0;
+      width: 1px;
+      height: 1px;
+      top: calc((100% - 100svh) * var(--at));
+    }
+
+    .arrivals__pin {
+      position: sticky;
+      top: 0;
+      height: 100svh;
+      overflow: hidden;
+    }
+
+    .arrivals__frame {
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+      height: 100%;
+      max-width: 104rem;
+      /* Clears the fixed bar, which floats over this section like any
+         other. */
+      padding: calc(var(--topbar-h) + clamp(1rem, 3vh, 2.5rem))
+        clamp(2rem, 5vw, 5.5rem) clamp(2rem, 5vh, 3.5rem);
+    }
+
+    .arrivals__head {
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: start;
+      gap: 2rem;
+    }
+
+    .arrivals__heading {
+      font-size: clamp(1.9rem, 3.4vw, 3rem);
+    }
+
+    /* The lead goes. A pinned screen has a fixed budget of lines and the
+       record standing in it says more about this book than a sentence
+       about the section can. It is still there in the stack below. */
+    .arrivals__lead {
+      display: none;
+    }
+
+    .arrivals__aside {
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 0.8rem;
+    }
+
+    /* --- The count -----------------------------------------------
+       Every number stacked in one box, each shown only across its own
+       slice. The box is sized by a copy of the last one, held at zero
+       opacity, so the row cannot shift as the count changes. --- */
+    .arrivals__tally {
+      display: flex;
+      align-items: baseline;
+      gap: 0.5rem;
+      font-family: var(--serif);
+      font-size: 0.95rem;
+      letter-spacing: 0.08em;
+      color: var(--ink-faint);
+    }
+
+    .arrivals__tally-now {
+      position: relative;
+      display: inline-block;
+    }
+
+    .arrivals__tally-n {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      color: var(--ink);
+      animation: arrival-mark linear;
+      animation-timeline: --arrivals;
+    }
+
+    .arrivals__tally-ghost {
+      opacity: 0;
+    }
+
+    .arrivals__tally-sep {
+      opacity: 0.5;
+    }
+
+    /* --- The stack ------------------------------------------------ */
+    .arrivals__stage {
+      margin-top: 0;
+      display: block;
+      height: 100%;
+    }
+
+    .arrivals__step {
+      position: absolute;
+      inset: 0;
+      border-top: 0;
+      padding-top: 0;
+      grid-template-columns: minmax(0, 32rem) minmax(0, 1fr);
+      gap: clamp(2rem, 6vw, 6rem);
+      align-items: center;
+    }
+
+    /* Every animation below names its keyframes and this one timeline
+       and takes its window from the two custom properties the component
+       sets on `.arrivals__step`. Both halves of that matter: the window
+       has to inherit, because `.book3d__inner` is three levels inside a
+       component this section does not own, and a range with no
+       animation-name to attach to is inert, which is why the fallback
+       above needs no undoing. */
+    .arrivals__record,
+    .arrivals__object,
+    .arrivals__ghost,
+    .arrivals__object .book3d__inner {
+      animation-timeline: --arrivals;
+      animation-range: contain var(--win-a, 0%) contain var(--win-b, 100%);
+    }
+
+    .arrivals__record,
+    .arrivals__object {
+      animation-name: arrival-swap;
+      animation-timing-function: linear;
+      animation-fill-mode: both;
+      will-change: opacity, transform;
+    }
+
+    /* The first arrival does not fade in and the last does not fade
+       out. Both are the same argument, read in opposite directions: the
+       first one's slice begins the instant the pin engages, so anything
+       that arrives during it arrives while the section is already still
+       and full screen, and before that the fill would hold it at zero
+       over an empty stage. The last one's slice ends where the pin lets
+       go, and fading out into that leaves the reader looking at nothing
+       for the last of the scroll. */
+    .arrivals__step[data-pos="first"] .arrivals__record,
+    .arrivals__step[data-pos="first"] .arrivals__object {
+      animation-name: arrival-first;
+    }
+
+    .arrivals__step[data-pos="last"] .arrivals__record,
+    .arrivals__step[data-pos="last"] .arrivals__object {
+      animation-name: arrival-last;
+    }
+
+    .arrivals__step[data-pos="solo"] .arrivals__record,
+    .arrivals__step[data-pos="solo"] .arrivals__object {
+      animation-name: arrival-hold;
+    }
+
+    /* The stops are not round numbers because they are not free. Each
+       window reaches 14% of a slice past both of its own edges (OVERLAP
+       in `arrivals-scroll.tsx`), so a window spans 1.28 slices and the
+       fade has to occupy the 0.28 of it that overlaps a neighbour:
+       0.28 / 1.28 is 21.9%, and the record is opaque for the rest. Get
+       these wrong and two records are visible at once in the middle of a
+       slice, or none are at a boundary. */
+    @keyframes arrival-swap {
+      0% {
+        opacity: 0;
+        transform: translate3d(0, 26px, 0);
+        z-index: 1;
+        pointer-events: none;
+      }
+      /* `pointer-events` is a discrete property: it flips at the midpoint
+         between the two stops that mention it, not gradually. Left to the
+         fade's own stops that midpoint is the middle of the cross-fade,
+         where the outgoing record has already given up its clicks and the
+         incoming one has not taken them yet, so a click during a swap
+         lands on nothing. These two extra stops hand it over at about
+         93% of the outgoing slice instead, where `z-index` has already
+         put the incoming record on top. */
+      11% {
+        pointer-events: auto;
+      }
+      21.9%,
+      78.1% {
+        opacity: 1;
+        transform: none;
+        z-index: 3;
+        pointer-events: auto;
+      }
+      89% {
+        pointer-events: none;
+      }
+      100% {
+        opacity: 0;
+        transform: translate3d(0, -26px, 0);
+        z-index: 1;
+        pointer-events: none;
+      }
+    }
+
+    /* The first and last windows are clipped by the ends of the timeline,
+       so they span 1.14 slices rather than 1.28 and their one fade sits at
+       0.28 / 1.14 = 24.6% from the clipped end. */
+    @keyframes arrival-first {
+      0%,
+      75.4% {
+        opacity: 1;
+        transform: none;
+        z-index: 3;
+        pointer-events: auto;
+      }
+      86% {
+        pointer-events: none;
+      }
+      100% {
+        opacity: 0;
+        transform: translate3d(0, -26px, 0);
+        z-index: 1;
+        pointer-events: none;
+      }
+    }
+
+    @keyframes arrival-last {
+      0% {
+        opacity: 0;
+        transform: translate3d(0, 26px, 0);
+        z-index: 1;
+        pointer-events: none;
+      }
+      12% {
+        pointer-events: auto;
+      }
+      24.6%,
+      100% {
+        opacity: 1;
+        transform: none;
+        z-index: 3;
+        pointer-events: auto;
+      }
+    }
+
+    @keyframes arrival-hold {
+      from,
+      to {
+        opacity: 1;
+        z-index: 3;
+        pointer-events: auto;
+      }
+    }
+
+    /* Current, for a rail item or a number in the corner. Discrete, not
+       a fade: `animation-fill-mode` is `none`, so outside its own slice
+       the effect is not applied at all and the element is simply back to
+       its resting style. That is an on and an off, from scroll position,
+       with nothing observing anything. */
+    @keyframes arrival-mark {
+      from,
+      to {
+        opacity: 1;
+        color: var(--ink);
+      }
+    }
+
+    /* --- The volume ----------------------------------------------
+       A quarter turn across the arrival's whole slice, so the book is
+       still moving whenever the reader is, and sits a few degrees off
+       square when they stop. This overrides Book3D's own resting
+       transform and its hover rule, which is what an animation does to
+       a declared value; the transition goes with it, or the hover rule
+       would try to interpolate every scrubbed frame. --- */
+    .arrivals__object .book3d__inner {
+      transition: none;
+      animation-name: arrival-turn;
+      animation-timing-function: linear;
+      animation-fill-mode: both;
+      will-change: transform;
+    }
+
+    @keyframes arrival-turn {
+      from {
+        transform: rotateY(-38deg) rotateX(6deg);
+      }
+      to {
+        /* Not symmetrical about square. The sweep is wide enough to read as
+           a turn, but its midpoint (which is where the book sits while the
+           reader is still) is about fourteen degrees off, showing the spine.
+           Past square the fore-edge comes round instead, and a book with its
+           pages toward you looks dropped rather than presented. */
+        transform: rotateY(10deg) rotateX(-3deg);
+      }
+    }
+
+    .arrivals__vol {
+      width: clamp(230px, 20vw, 330px);
+      /* The only motion in this section that runs on a clock rather
+         than on the scroll, and the reason the book does not look
+         switched off when the reader stops. Slow, and a different
+         period from anything else on the page, so nothing falls into
+         step with it. */
+      animation: arrival-float 9.5s var(--ease-subtle) infinite;
+    }
+
+    @keyframes arrival-float {
+      0%,
+      100% {
+        transform: translate3d(0, -1.1%, 0);
+      }
+      50% {
+        transform: translate3d(0, 1.5%, 0);
+      }
+    }
+
+    /* --- Atmosphere ----------------------------------------------
+       The ghost numeral, the bloom behind the book and two hairline
+       ellipses. Between them they turn a book on a blank half-screen
+       into a book standing somewhere, which is most of what the
+       reference is doing with its can. --- */
+    .arrivals__ghost {
+      display: block;
+      position: absolute;
+      z-index: 1;
+      /* Behind the book and to the right of it, so both stay readable: a
+         numeral centred on the volume is a numeral nobody can see, and one
+         much further out is clipped by the pin. */
+      inset-inline-end: 6%;
+      font-family: var(--serif);
+      font-size: clamp(9rem, 17vw, 19rem);
+      line-height: 0.78;
+      color: color-mix(in oklab, var(--accent) 13%, transparent);
+      animation-name: arrival-ghost;
+      animation-timing-function: linear;
+      animation-fill-mode: both;
+      user-select: none;
+    }
+
+    @keyframes arrival-ghost {
+      from {
+        transform: translate3d(3%, 3%, 0) scale(1.01);
+      }
+      to {
+        transform: translate3d(-3%, -4%, 0) scale(1.08);
+      }
+    }
+
+    .arrivals__bloom {
+      display: block;
+      position: absolute;
+      z-index: 0;
+      width: min(38rem, 88%);
+      aspect-ratio: 1;
+      border-radius: 50%;
+      background: radial-gradient(
+        circle,
+        color-mix(in oklab, var(--accent-lit) 58%, transparent) 0%,
+        color-mix(in oklab, var(--accent-lit) 22%, transparent) 46%,
+        transparent 74%
+      );
+      filter: blur(16px);
+    }
+
+    .arrivals__ring {
+      display: block;
+      position: absolute;
+      z-index: 0;
+      border: 1px solid color-mix(in oklab, var(--ink) 7%, transparent);
+      border-radius: 50%;
+    }
+
+    .arrivals__ring--wide {
+      width: min(46rem, 108%);
+      aspect-ratio: 1.5;
+      inset-inline-start: -14%;
+    }
+
+    .arrivals__ring--tight {
+      width: min(24rem, 62%);
+      aspect-ratio: 1.15;
+      inset-block-start: 12%;
+      inset-inline-start: 4%;
+    }
+
+    /* The two small labels in the object's margin, which is where the
+       reference puts its flavour cues. Ours are facts, and they are
+       `aria-hidden` with the record because the spec sheet has already
+       said both. */
+    .arrivals__tag {
+      display: block;
+      position: absolute;
+      z-index: 2;
+      max-width: 9.5rem;
+      font-size: 0.62rem;
+      font-weight: 600;
+      letter-spacing: 0.2em;
+      line-height: 1.5;
+      text-transform: uppercase;
+      color: var(--ink-faint);
+    }
+
+    .arrivals__tag--shelf {
+      inset-block-start: 24%;
+      inset-inline-start: 0;
+    }
+
+    .arrivals__tag--file {
+      inset-block-end: 22%;
+      inset-inline-start: 0;
+    }
+
+    /* --- The rail ------------------------------------------------- */
+    .arrivals__rail {
+      display: block;
+      position: absolute;
+      inset-block-end: clamp(1.5rem, 4vh, 2.75rem);
+      inset-inline-end: clamp(2rem, 5vw, 5.5rem);
+      z-index: 4;
+    }
+
+    .arrivals__rail ol {
+      display: flex;
+      align-items: center;
+      gap: 1.1rem;
+    }
+
+    .arrivals__step-link {
+      display: inline-block;
+      font-size: 0.8rem;
+      letter-spacing: 0.14em;
+      font-variant-numeric: tabular-nums;
+      color: var(--ink-faint);
+      opacity: 0.55;
+      animation: arrival-mark linear;
+      animation-timeline: --arrivals;
+      transition: opacity var(--dur-fast) var(--ease-subtle);
+    }
+
+    .arrivals__step-link:hover {
+      opacity: 1;
+    }
+
+    /* Tabbing into a record that the scroll is not showing brings it to
+       the front, rather than leaving a keyboard reader working inside
+       something invisible. Overriding an animated property means turning
+       the animation off, not out-specifying it. */
+    .arrivals__step:focus-within .arrivals__record {
+      animation-name: none;
+      opacity: 1;
+      transform: none;
+      z-index: 5;
+      pointer-events: auto;
+    }
+
+    /* The two labels live in the object's margin, and below this width
+       there is no margin: the volume fills the column and the labels
+       end up printed across the cover. They are atmosphere, so they go
+       rather than move. */
+    @media (max-width: 1279px) {
+      .arrivals__tag {
+        display: none;
+      }
+    }
+
+    /* --- A short window ------------------------------------------
+       A pinned screen has a fixed budget of lines and a laptop has
+       fewer of them than a desktop. Measured on the tightest case
+       that still gets this presentation (1024 x 640, showing the
+       longest title in the collection), the record ran 67px past the
+       bottom of the pin; these bring it back inside with room to
+       spare, by spending the two things that can be spent without
+       changing what the record says. A title reads in two lines when
+       it has to, and the note is a taste of a description that the
+       record links to in full. --- */
+    @media (max-height: 820px) {
+      .arrivals__frame {
+        padding-top: calc(var(--topbar-h) + 0.75rem);
+      }
+
+      .arrivals__heading {
+        font-size: clamp(1.6rem, 2.6vw, 2.2rem);
+      }
+
+      .arrivals__title {
+        font-size: clamp(1.5rem, 2.7vw, 2.2rem);
+        -webkit-line-clamp: 2;
+      }
+
+      .arrivals__by {
+        margin-top: 0.5rem;
+        font-size: 0.95rem;
+      }
+
+      .arrivals__note {
+        margin-top: 0.85rem;
+        -webkit-line-clamp: 2;
+      }
+
+      .arrivals__spec {
+        margin-top: 1.1rem;
+        gap: 0.28rem;
+      }
+
+      .arrivals__total {
+        margin-top: 0.8rem;
+        padding-top: 0.7rem;
+      }
+
+      .arrivals__foot {
+        margin-top: 1.1rem;
+      }
+
+      .arrivals__vol {
+        width: clamp(180px, 16vw, 250px);
+      }
+
+      .arrivals__ghost {
+        font-size: clamp(8rem, 14vw, 15rem);
+      }
+    }
+  }
+}
+
+/* ---------------------------------------------------------------
+   Hero: the cinema band.
+
+   Four plates cross-dissolving behind the name, each with a slow
+   push. No script and no video file: see the note at the top of
+   `hero-cinematic.tsx` for why a `<video>` would be the heavier and
+   less controllable answer, not the richer one.
+
+   ## The band is dark in both themes
+
+   The rule this file opens with is that dark mode is a token swap and
+   no component overrides colour per theme. This section is the single
+   exception, and it is written as an exception on purpose: the tokens
+   below are redefined once, here, scoped to `.cinema`, so everything
+   inside inherits a dark palette in light mode and in dark mode alike.
+   A cinema frame is dark because the picture is the light source. The
+   alternative (a pale version of this for light mode) is not the same
+   design in another palette, it is a different design.
+
+   Because they are the same tokens, every child rule still reads
+   `var(--ink)` and `var(--line)` like any other component, and none of
+   them knows it is in a dark band. That is the whole reason for doing it
+   with tokens rather than a hundred `.cinema .x { color: … }` overrides.
+
+   ## The dissolve
+
+   One `@keyframes`, four plates, each delayed by its share of the loop:
+
+       animation-delay: calc(var(--i) * var(--cycle) / var(--n))
+
+   A plate ramps up over the first 8% of the cycle, holds to 25%, ramps
+   down by 33%, and is transparent for the rest. With four plates a
+   quarter-cycle apart, exactly one is at full at any moment and exactly
+   two overlap during a hand-over. The two overlapping plates are both
+   partly transparent for those two seconds, so a little of the ground
+   shows through the middle of the transition: about a quarter of it at
+   the midpoint. Against a near-black plum ground, under plates that are
+   themselves near-black plum, that reads as the dip of a film cut. It is
+   the reason this is one keyframe and a delay instead of four
+   hand-authored sequences.
+--------------------------------------------------------------- */
+/* The scoped dark palette, shared by the two dark bands on the site: this
+   one and the catalogue's room (`.cine`, further down). Same token names, so
+   children of either stay theme-agnostic, and one rule rather than two so
+   they cannot drift apart into two different darks. */
+.cinema,
+.cine,
+.tome__plate {
+  --bg: #150a11;
+  --bg-deep: #0d0509;
+  --ink: #fdeef4;
+  --ink-mute: #e2c2d1;
+  --ink-faint: #b18ca0;
+  --line: rgba(253, 238, 244, 0.22);
+  --line-soft: rgba(253, 238, 244, 0.12);
+}
+
+.cinema {
+  --cycle: 26s;
+
+  position: relative;
+  display: grid;
+  grid-template-rows: 1fr auto;
+  min-height: 100svh;
+  isolation: isolate;
+  overflow: hidden;
+  background: var(--bg-deep);
+  color: var(--ink);
+}
+
+.cinema__plates {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.cinema__plate {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  animation: plate-cycle var(--cycle) linear infinite;
+  animation-delay: calc(var(--i) * var(--cycle) / var(--n));
+}
+
+.cinema__img {
+  object-fit: cover;
+  animation: plate-push var(--cycle) linear infinite;
+  animation-delay: calc(var(--i) * var(--cycle) / var(--n));
+  will-change: transform;
+}
+
+@keyframes plate-cycle {
+  0% {
+    opacity: 0;
+  }
+  8% {
+    opacity: 1;
+  }
+  25% {
+    opacity: 1;
+  }
+  33% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* The push runs across the plate's visible stretch and is reset one percent
+   later (at 34%, while the plate is transparent), so the jump back to the
+   start of the move is never seen. Without that reset the transform would
+   keep interpolating for the other two thirds of the cycle and the plate
+   would come back at a different scale each time. */
+@keyframes plate-push {
+  0% {
+    transform: scale(1.04) translate3d(-0.9%, 0, 0);
+  }
+  33% {
+    transform: scale(1.15) translate3d(0.9%, 0, 0);
+  }
+  34%,
+  100% {
+    transform: scale(1.04) translate3d(-0.9%, 0, 0);
+  }
+}
+
+/* Scrim one: a vertical gradient, heaviest at the top and the foot, where
+   the header and the meta line sit. Type over a photograph is legible or
+   not depending on which photograph, and four of them are cycling. */
+.cinema__scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background:
+    linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--bg-deep) 72%, transparent) 0%,
+      color-mix(in oklab, var(--bg-deep) 28%, transparent) 26%,
+      color-mix(in oklab, var(--bg-deep) 36%, transparent) 58%,
+      color-mix(in oklab, var(--bg-deep) 88%, transparent) 100%
+    ),
+    /* And a centre-weighted radial, so the name has its own pool of
+       darkness wherever the plate underneath happens to be bright. */
+    radial-gradient(
+      118% 88% at 50% 44%,
+      color-mix(in oklab, var(--bg-deep) 58%, transparent) 0%,
+      transparent 64%
+    );
+}
+
+/* Scrim two: a fine dither. Large smooth gradients over a compressed
+   photograph band badly on 8-bit displays, and a barely-visible noise is
+   the cheapest fix there is. */
+.cinema__grain {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  opacity: 0.5;
+  background-image: radial-gradient(
+    circle at center,
+    rgba(255, 255, 255, 0.045) 0.5px,
+    transparent 0.6px
+  );
+  background-size: 3px 3px;
+}
+
+.cinema__stage {
+  position: relative;
+  z-index: 3;
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 0;
+  padding: 7rem 1.5rem 3rem;
+  text-align: center;
+}
+
+.cinema__eyebrow {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+  color: color-mix(in oklab, var(--ink) 72%, transparent);
+}
+
+/* The name, set the way the reference sets its own: a serif at a wide
+   track, centred, in two short lines. `--font-reading` is already loaded
+   for the reader (Noto Serif Bengali carries Latin too), so this costs
+   no extra font, and it is the one place on the site where the display
+   grotesk would say "product" rather than "collection". */
+.cinema__title {
+  margin-top: 1.6rem;
+  font-family: var(--serif);
+  font-size: clamp(2.6rem, 7.4vw, 6.5rem);
+  font-weight: 400;
+  line-height: 1.02;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+
+.cinema__title.bn {
+  /* Bengali is not set in capitals (there are none), and it needs its
+     leading back. */
+  text-transform: none;
+  letter-spacing: 0.01em;
+  line-height: 1.28;
+  font-size: clamp(2.1rem, 6vw, 5rem);
+}
+
+/* Each line clipped by its own box while the type inside rises out of it.
+   The negative margin and the equal positive padding cancel, so the line
+   sits where it would have, but the clip box is inflated enough that a
+   descender is not sheared off. Same trick as the chapter titles. */
+.cinema__line {
+  display: block;
+  overflow: hidden;
+  margin: -0.14em;
+  padding: 0.14em;
+}
+
+.cinema__line > span {
+  display: block;
+  animation: cinema-line-rise var(--dur-block) var(--ease-title) both;
+}
+
+.cinema__line:nth-child(2) > span {
+  animation-delay: 0.16s;
+}
+
+@keyframes cinema-line-rise {
+  from {
+    transform: translate3d(0, 110%, 0);
+  }
+  to {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.cinema__rule {
+  display: block;
+  width: 4.5rem;
+  height: 1px;
+  margin-top: 2.2rem;
+  background: color-mix(in oklab, var(--ink) 55%, transparent);
+  transform-origin: 50% 50%;
+  animation: cinema-rule-open 1.1s var(--ease-out) 0.5s both;
+}
+
+@keyframes cinema-rule-open {
+  from {
+    transform: scaleX(0);
+    opacity: 0;
+  }
+  to {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+}
+
+.cinema__lead {
+  margin-top: 1.8rem;
+  max-width: 33rem;
+  font-size: 1.03rem;
+  line-height: 1.75;
+  color: var(--ink-mute);
+  animation: cinema-fade-up 1s var(--ease-out) 0.62s both;
+}
+
+.cinema__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.85rem;
+  margin-top: 2.4rem;
+  animation: cinema-fade-up 1s var(--ease-out) 0.76s both;
+}
+
+@keyframes cinema-fade-up {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 18px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+/* The buttons are not the app's `Button` component, and that is deliberate:
+   its primary is a filled pink pill tuned for a pale page, and on a dark
+   photograph a saturated fill is the loudest thing on the screen. These are
+   the same shape at a different weight: one solid in the page's pink, one
+   a hairline outline. */
+.cinema__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  padding: 0.82rem 1.65rem;
+  font-size: 0.94rem;
+  font-weight: 600;
+  background: var(--accent);
+  color: var(--accent-ink);
+  transition:
+    background var(--dur-normal) ease,
+    border-color var(--dur-normal) ease,
+    gap var(--dur-normal) var(--ease-out);
+}
+
+.cinema__cta:hover {
+  background: var(--accent-hover);
+  gap: 0.9rem;
+}
+
+.cinema__cta--ghost {
+  background: transparent;
+  border-color: var(--line);
+  color: var(--ink);
+  backdrop-filter: blur(6px);
+}
+
+.cinema__cta--ghost:hover {
+  background: color-mix(in oklab, var(--ink) 12%, transparent);
+  border-color: color-mix(in oklab, var(--ink) 45%, transparent);
+}
+
+.cinema__cta:focus-visible,
+.cinema__cue:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 3px;
+}
+
+/* --- The foot ------------------------------------------------------ */
+.cinema__foot {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1.25rem;
+  padding: 0 1.5rem 2.25rem;
+  animation: cinema-fade-up 1s var(--ease-out) 0.95s both;
+}
+
+@media (min-width: 1024px) {
+  .cinema__foot {
+    padding-inline: clamp(1.5rem, 4vw, 3.5rem);
+  }
+}
+
+.cinema__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.4rem;
+  list-style: none;
+  padding: 0;
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: color-mix(in oklab, var(--ink) 62%, transparent);
+}
+
+.cinema__meta li + li {
+  position: relative;
+}
+
+.cinema__meta li + li::before {
+  content: "";
+  position: absolute;
+  left: -0.75rem;
+  top: 0.42em;
+  width: 3px;
+  height: 3px;
+  border-radius: 999px;
+  background: currentcolor;
+}
+
+.cinema__cue {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.7rem;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: color-mix(in oklab, var(--ink) 72%, transparent);
+  transition: color var(--dur-normal) ease;
+}
+
+.cinema__cue:hover {
+  color: var(--ink);
+}
+
+/* A hairline that runs down and repeats: the one looping motion in the
+   composition that is not the footage, and it is what makes the cue read as
+   an instruction rather than a label. */
+.cinema__cue-line {
+  display: block;
+  width: 1px;
+  height: 2.4rem;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    color-mix(in oklab, var(--ink) 70%, transparent)
+  );
+  animation: cue-run 2.4s var(--ease-in-out) infinite;
+  transform-origin: 50% 0;
+}
+
+@keyframes cue-run {
+  0%,
+  100% {
+    transform: scaleY(0.35);
+    opacity: 0.35;
+  }
+  45% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+
+@media (min-width: 768px) {
+  .cinema__cue-line {
+    height: 3.4rem;
+  }
+}
+
+/* --- Less motion --------------------------------------------------
+   One plate, held. Everything else in the band is already covered by
+   the global kill-switch's zeroed durations; the cycle needs saying
+   explicitly because a zero-duration infinite animation would still
+   sit on the first keyframe, which for every plate but the first is
+   `opacity: 0`, an empty hero.
+   ---------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  .cinema__plate,
+  .cinema__img,
+  .cinema__cue-line {
+    animation: none !important;
+  }
+
+  .cinema__plate {
+    opacity: 0;
+  }
+
+  .cinema__plate:first-child {
+    opacity: 1;
+  }
+
+  .cinema__img {
+    transform: scale(1.04);
+  }
+
+  .cinema__line > span,
+  .cinema__rule,
+  .cinema__lead,
+  .cinema__actions,
+  .cinema__foot {
+    transform: none !important;
+    opacity: 1 !important;
+  }
+}
+
+/* ---------------------------------------------------------------
+   Catalogue: the dark room.
+
+   The front of /books. One dark band holding the section's name, the
+   page's title, the filters as the only controls in it, and whichever
+   book the current filter puts first, standing in the middle. The grid
+   follows below on the page's own ground.
+
+   ## Dark in both themes, and why that is not a new exception
+
+   The palette is redefined once, above, on `.cinema, .cine` together:
+   same token names, so every rule in here reads `var(--ink)` like any
+   other component and none of them knows it is in the dark. Two bands
+   share one exception rather than each having their own, which is the
+   only way this stays a rule with an exception instead of a habit.
+
+   ## No JavaScript, including the filters
+
+   Every pill is a link and the search box is a `method="get"` form, so
+   this whole section is static HTML: a filtered view is a URL, the back
+   button steps through filter changes, and nothing waits on hydration.
+   The one measured thing, the rule under a spec row that doubles as a
+   bar, takes its width from a `--share` percentage the server works out.
+---------------------------------------------------------------- */
+.cine {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background: var(--bg-deep);
+  color: var(--ink);
+  /* Cancels `<main>`'s top padding so the room reaches the top edge of the
+     viewport and the fixed bar floats on it, exactly as the home hero does. */
+  margin-top: calc(-1 * var(--topbar-h));
+}
+
+/* The room's light: one soft pool behind where the book stands, and a
+   vignette closing the corners down. Between them they are the whole reason
+   the ground reads as a room rather than as a dark rectangle. */
+.cine::before,
+.cine::after {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.cine::before {
+  inset-inline: 0;
+  inset-block-start: 22%;
+  height: 70%;
+  background: radial-gradient(
+    60% 50% at 50% 40%,
+    color-mix(in oklab, var(--accent-lit) 14%, transparent) 0%,
+    transparent 70%
+  );
+}
+
+.cine::after {
+  inset: 0;
+  background: radial-gradient(
+    120% 90% at 50% 42%,
+    transparent 40%,
+    color-mix(in oklab, #000 42%, transparent) 100%
+  );
+}
+
+.cine__inner {
+  position: relative;
+  z-index: 1;
+  margin-inline: auto;
+  width: 100%;
+  max-width: 96rem;
+  padding: calc(var(--topbar-h) + 2.5rem) 1.25rem 3rem;
+  display: grid;
+  gap: 2.5rem;
+}
+
+@media (min-width: 640px) {
+  .cine__inner {
+    padding-inline: 2.5rem;
+  }
+}
+
+/* --- The head ---------------------------------------------------- */
+.cine__head {
+  display: grid;
+  justify-items: center;
+  text-align: center;
+  gap: 1.25rem;
+}
+
+.cine__eyebrow {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.cine__title {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: clamp(2.4rem, 6vw, 4.2rem);
+  font-weight: 400;
+  letter-spacing: -0.015em;
+  line-height: 1;
+  color: var(--ink);
+}
+
+.cine__stop {
+  color: var(--accent);
+}
+
+/* --- Search ------------------------------------------------------ */
+.cine__search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: min(30rem, 100%);
+  border-bottom: 1px solid var(--line);
+  padding-block: 0.5rem;
+  transition: border-color var(--dur-normal) var(--ease-subtle);
+}
+
+.cine__search:focus-within {
+  border-color: var(--ink);
+}
+
+.cine__search-glyph {
+  width: 1rem;
+  height: 1rem;
+  flex: none;
+  color: var(--ink-faint);
+}
+
+.cine__search-field {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  font-size: 0.95rem;
+  text-align: start;
+}
+
+.cine__search-field::placeholder {
+  color: var(--ink-faint);
+}
+
+.cine__search-field:focus {
+  outline: none;
+}
+
+/* The submit button. Visible, because a search field whose only way to run
+   is the Enter key is a search field half the people looking at it cannot
+   use, and this section has no script to give it a live one. */
+.cine__search-go {
+  flex: none;
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  transition: color var(--dur-fast) var(--ease-subtle);
+}
+
+.cine__search-go:hover {
+  color: var(--ink);
+}
+
+/* --- The pills --------------------------------------------------- */
+.cine__pills ul {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+/* Sized to fit. Seven shelves with names like "Breastfeeding & Nutrition"
+   are a great deal more text than the reference's four one-word flavours,
+   and tracked capitals are the widest way to set anything; at 0.16em they
+   wrapped to a second row that left one pill stranded on its own. These
+   numbers are what puts all seven on one line at 1280 and up. */
+.cine__pill {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0.5rem 0.85rem;
+  font-size: 0.64rem;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  transition: border-color var(--dur-fast) var(--ease-subtle),
+    color var(--dur-fast) var(--ease-subtle),
+    background var(--dur-fast) var(--ease-subtle);
+}
+
+.cine__pill:hover {
+  border-color: color-mix(in oklab, var(--ink) 45%, transparent);
+  color: var(--ink);
+}
+
+/* The current filter is the filled one, as on the reference. Filled in the
+   page's ink rather than in the accent: the accent is the colour of things
+   to press, and this is the one pill that has already been pressed. */
+.cine__pill[data-active] {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--bg-deep);
+}
+
+.cine__pill-count {
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  opacity: 0.55;
+}
+
+/* --- Sort and language ------------------------------------------- */
+.cine__choices {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem 2rem;
+  font-size: 0.66rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.cine__choice {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+}
+
+.cine__choice ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.cine__choice-label {
+  white-space: nowrap;
+  color: color-mix(in oklab, var(--ink-faint) 80%, transparent);
+}
+
+.cine__choice-link {
+  color: var(--ink-mute);
+  transition: color var(--dur-fast) var(--ease-subtle);
+}
+
+.cine__choice-link:hover {
+  color: var(--ink);
+}
+
+.cine__choice-link[data-active] {
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 0.35em;
+  text-decoration-color: var(--accent);
+  text-decoration-thickness: 1px;
+}
+
+/* Bengali, everywhere this room sets small tracked capitals.
+
+   Capitals do not exist in the script, so `text-transform` is a no-op and
+   the tracking is already off (the global `.bn` rule), which leaves the
+   size: 0.62rem is a readable Latin small-cap and an unreadable Bengali
+   word, because the script carries its meaning in marks above and below
+   the line rather than in the letter shapes. A little more of it, and the
+   leading back. */
+.cine__eyebrow.bn,
+.cine__pill.bn,
+.cine__choice-label.bn,
+.cine__choice-link.bn,
+.cine__spec-label.bn,
+.cine__strapline.bn {
+  font-size: 0.78rem;
+  line-height: 1.6;
+  text-transform: none;
+}
+
+.cine__title.bn {
+  font-style: normal;
+  line-height: 1.32;
+  font-size: clamp(2rem, 5.4vw, 3.6rem);
+}
+
+/* --- The stage ---------------------------------------------------
+   Stacked below `lg`: the book, then the record. The signage is the
+   title set as an object and it only earns its size when there is a
+   column to put it in, so it is the one part that goes.
+   ---------------------------------------------------------------- */
+.cine__stage {
+  display: grid;
+  justify-items: center;
+  align-items: center;
+  gap: 2.5rem;
+  padding-block: 1rem 0.5rem;
+}
+
+.cine__signage {
+  display: none;
+}
+
+.cine__vol {
+  position: relative;
+  width: clamp(180px, 44vw, 260px);
+}
+
+.cine__bloom {
+  position: absolute;
+  z-index: -1;
+  inset: -30% -45%;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    color-mix(in oklab, var(--accent-lit) 30%, transparent) 0%,
+    transparent 68%
+  );
+  filter: blur(18px);
+}
+
+.cine__meta {
+  width: min(30rem, 100%);
+}
+
+.cine__counter {
+  font-family: var(--serif);
+  font-size: 0.9rem;
+  letter-spacing: 0.16em;
+  color: var(--ink-faint);
+}
+
+.cine__note {
+  margin-top: 0.9rem;
+  font-size: 1rem;
+  line-height: 1.7;
+  color: var(--ink-mute);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* --- The spec table ---------------------------------------------
+   Label left, figure right, a hairline under each row. On the row
+   that has a scale to be read against, that hairline is the scale:
+   `--share` of it is drawn in the accent, the rest in the line
+   colour, so the measure is the divider rather than an extra object
+   sitting under it.
+   ---------------------------------------------------------------- */
+.cine__spec {
+  margin-top: 1.6rem;
+  border-top: 1px solid var(--line-soft);
+}
+
+.cine__spec-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-block: 0.7rem;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.cine__spec-row[data-measured] {
+  position: relative;
+  border-bottom-color: transparent;
+}
+
+.cine__spec-row[data-measured]::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  inset-block-end: 0;
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    var(--accent) 0 var(--share, 0%),
+    var(--line-soft) var(--share, 0%) 100%
+  );
+}
+
+.cine__spec-label {
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.cine__spec-value {
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  text-align: end;
+}
+
+.cine__spec-figure {
+  font-family: var(--serif);
+  font-size: 1.05rem;
+  color: var(--ink);
+}
+
+.cine__spec-unit {
+  font-size: 0.58rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.cine__open {
+  margin-top: 1.5rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0.6rem 1.2rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--ink);
+  transition: border-color var(--dur-normal) var(--ease-subtle),
+    background var(--dur-normal) var(--ease-subtle),
+    color var(--dur-normal) var(--ease-subtle);
+}
+
+.cine__open:hover {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--bg-deep);
+}
+
+.cine__empty {
+  padding-block: 4rem;
+  text-align: center;
+  font-size: 1.05rem;
+  color: var(--ink-mute);
+}
+
+/* --- The foot ---------------------------------------------------- */
+.cine__foot {
+  display: grid;
+  justify-items: center;
+  gap: 1.5rem;
+}
+
+.cine__cue {
+  display: grid;
+  place-items: center;
+  width: 2.1rem;
+  height: 2.1rem;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  transition: border-color var(--dur-normal) var(--ease-subtle);
+}
+
+.cine__cue > span {
+  width: 0.3rem;
+  height: 0.3rem;
+  border-radius: 50%;
+  background: var(--ink);
+  transition: transform var(--dur-normal) var(--ease-subtle);
+}
+
+.cine__cue:hover {
+  border-color: var(--ink);
+}
+
+.cine__strapline {
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  text-align: center;
+  color: color-mix(in oklab, var(--ink-faint) 85%, transparent);
+}
+
+/* --- Wide: the reference's three columns ------------------------- */
+@media (min-width: 1024px) {
+  .cine {
+    min-height: 100svh;
+  }
+
+  .cine__inner {
+    min-height: 100svh;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    padding: calc(var(--topbar-h) + clamp(1.5rem, 4vh, 3rem))
+      clamp(2rem, 5vw, 4.5rem) clamp(1.5rem, 4vh, 2.5rem);
+    gap: clamp(1.5rem, 4vh, 3rem);
+  }
+
+  .cine__stage {
+    width: 100%;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    gap: clamp(1.5rem, 4vw, 4rem);
+    padding-block: 0;
+  }
+
+  /* The title, set as signage: the display face at a size where it is
+     furniture rather than a heading, ranged left against the volume. Held
+     back in weight, because the record on the right is what is meant to be
+     read and two things at full contrast would compete. */
+  .cine__signage {
+    display: block;
+    justify-self: start;
+    max-width: 24rem;
+    text-align: start;
+  }
+
+  /* Sized so that the longest single word in the collection ("RECOMMENDATIONS")
+     still fits the column. A clamped box clips rather than shrinks, and a
+     title clipped mid-letter reads as a rendering fault rather than as a
+     design; `overflow-wrap` is the backstop for anything longer still. */
+  .cine__display {
+    font-family: var(--grotesk);
+    font-size: clamp(1.25rem, 2.05vw, 2.05rem);
+    overflow-wrap: break-word;
+    hyphens: auto;
+    font-weight: 800;
+    letter-spacing: 0.01em;
+    line-height: 1.02;
+    text-transform: uppercase;
+    color: color-mix(in oklab, var(--ink) 88%, transparent);
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .cine__by {
+    margin-top: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 0.95rem;
+    color: var(--ink-faint);
+  }
+
+  .cine__by-rule {
+    width: 2.5rem;
+    height: 1px;
+    background: var(--line);
+  }
+
+  .cine__vol {
+    width: clamp(200px, 17vw, 280px);
+    /* The one thing in the room that moves, and only just: a slow rise and
+       fall on a period nothing else on the page shares. Time-based rather
+       than scroll-driven because this band does not scrub, and it is inside
+       this query so a reader who asked for less motion never has it: the
+       global switch zeroes durations, and below `lg` it does not exist. */
+    animation: cine-float 11s var(--ease-subtle) infinite;
+  }
+
+  @keyframes cine-float {
+    0%,
+    100% {
+      transform: translate3d(0, -1%, 0);
+    }
+    50% {
+      transform: translate3d(0, 1.4%, 0);
+    }
+  }
+
+  .cine__meta {
+    width: auto;
+    max-width: 26rem;
+  }
+
+  .cine__foot {
+    grid-template-columns: 2.1rem minmax(0, 1fr) 2.1rem;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  /* --- A short window ------------------------------------------
+     The room is one screen by design, and a laptop's screen is a
+     good deal shorter than the one this was drawn on: measured at
+     1280 x 720 the record's button and the strapline both sat below
+     the fold. Everything here is the same composition with the air
+     taken out, which is cheaper than a second layout and cannot
+     drift away from the first one. --- */
+  @media (max-height: 820px) {
+    .cine__inner {
+      gap: clamp(0.9rem, 2.4vh, 1.75rem);
+      padding-block: calc(var(--topbar-h) + 0.75rem) 1.25rem;
+    }
+
+    .cine__head {
+      gap: 0.8rem;
+    }
+
+    .cine__title {
+      font-size: clamp(1.9rem, 4vw, 2.7rem);
+    }
+
+    .cine__display {
+      font-size: clamp(1.1rem, 1.7vw, 1.65rem);
+    }
+
+    .cine__vol {
+      width: clamp(150px, 13vw, 215px);
+    }
+
+    .cine__note {
+      margin-top: 0.7rem;
+      -webkit-line-clamp: 2;
+    }
+
+    .cine__spec {
+      margin-top: 1.1rem;
+    }
+
+    .cine__spec-row {
+      padding-block: 0.5rem;
+    }
+
+    .cine__open {
+      margin-top: 1rem;
+    }
+
+    .cine__foot {
+      gap: 0.75rem;
+    }
+
+    /* Shorter still: a 1024 x 640 window, which is the smallest thing
+       that gets this presentation at all. The strapline and the cue are
+       the only parts that can be spent, and here they are the only parts
+       that are: everything else is the same room, smaller. */
+    @media (max-height: 700px) {
+      .cine__title {
+        font-size: clamp(1.7rem, 3.4vw, 2.2rem);
+      }
+
+      .cine__vol {
+        width: clamp(140px, 11.5vw, 180px);
+      }
+
+      .cine__note {
+        -webkit-line-clamp: 2;
+        font-size: 0.92rem;
+      }
+
+      .cine__spec-row {
+        padding-block: 0.4rem;
+      }
+
+      .cine__foot {
+        gap: 0.5rem;
+      }
+    }
+  }
+
+  .cine__cue {
+    grid-column: 1;
+  }
+
+  .cine__strapline {
+    grid-column: 2;
+  }
+}
+
+/* The volume is a real 3D object here, so it gets the same treatment the
+   arrivals section gives its own: a resting angle that shows the spine
+   rather than a cover held square to the camera. Not scroll-driven, so it
+   is a plain declaration and Book3D's hover still works over it. */
+.cine__vol .book3d {
+  --ry: -17deg;
+  --ry-hover: -6deg;
+}
+
+/* ---------------------------------------------------------------
+   The book, staged.
+
+   `/books/[slug]` is the most visited page in the library: every
+   other page on the site is a way of arriving at one of these. What
+   was here was a record card, which is the right shape for a
+   catalogue row and the wrong shape for the page a reader reaches
+   from a printed leaflet. So it is five acts, and this section is
+   all five of them.
+
+     I    `.tome__plate`       one dark screen: the volume, lit,
+                               with its subject behind it
+     II   `.tome__panels`      three plates and a paragraph
+     III  `.tome__statement`   the display pairing
+     IV   `.tome__record-band` the catalogue data, measured
+     V    `.tome__sponsor`     the advert, given its own room
+
+   ## The motion is scroll position, not elapsed time
+
+   Everything that moves as the page is read is a CSS scroll-driven
+   animation on a `view()` timeline. That is the same mechanism the
+   rest of the file uses and it is chosen for the same reasons: it
+   runs off the main thread, it scrubs backwards when the reader
+   scrolls back up, and it needs no listener and no measuring. The
+   two clock-driven exceptions are the plate's entrance (nothing has
+   been scrolled yet when it plays) and the volume's float.
+
+   Every one of them is inside `@supports (animation-timeline:
+   view())` **and** `prefers-reduced-motion: no-preference`, so a
+   browser without the feature and a reader who asked for less both
+   get the same complete, static page.
+
+   ## Two ranges, and why the plate uses `exit`
+
+   The plate is exactly one viewport tall and it starts at the top of
+   the document, which means it is *already* halfway through its
+   `cover` range before a pixel has been scrolled. `exit` is the
+   phase that begins the moment the subject's top edge reaches the
+   top of the scrollport, which for this element is scroll zero, and
+   ends when it has gone. So `exit 0%` to `exit 100%` maps exactly
+   onto the first screen of scrolling, which is what the parallax and
+   the volume's turn are supposed to be tied to. Everything further
+   down the page is a normal `entry` reveal.
+--------------------------------------------------------------- */
+.tome {
+  display: block;
+}
+
+/* =================================================================
+   Act I: the plate
+   ================================================================= */
+.tome__plate {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: grid;
+  min-height: 100svh;
+  background: var(--bg-deep);
+  color: var(--ink);
+  /* Cancels `<main>`'s top padding so the picture reaches the top edge of
+     the viewport and the fixed bar floats on it, as the home hero and the
+     catalogue's room both do. */
+  margin-top: calc(-1 * var(--topbar-h));
+}
+
+/* --- The room ----------------------------------------------------
+   Four layers, none of which is content: the photograph of the
+   subject, the film over it, and two scrims. The scrims are not
+   decoration. The photograph is a different picture on every shelf
+   and the type has to be legible on all six of them, which a fixed
+   colour cannot promise and a gradient can.
+   ---------------------------------------------------------------- */
+.tome__room {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.tome__still {
+  object-fit: cover;
+  /* Well under half strength. This is the room the book is standing in,
+     not the subject of the screen; at full brightness the reader looks at
+     the photograph and the volume becomes a sticker on it. */
+  opacity: 0.42;
+}
+
+/* The film. `screen` is why the encoded frames are black where nothing is
+   happening: black is the identity for that blend, so only the light in
+   the frame lands on the photograph and there is no matte to get wrong.
+   See `scripts/build-atmosphere.mjs`. */
+.tome__film {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  mix-blend-mode: screen;
+  opacity: 0.6;
+}
+
+.tome__veil {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background:
+    /* Heaviest where the type is: down the reading side, and along the
+       foot where the cue sits. */
+    linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--bg-deep) 78%, transparent) 0%,
+      color-mix(in oklab, var(--bg-deep) 34%, transparent) 30%,
+      color-mix(in oklab, var(--bg-deep) 42%, transparent) 62%,
+      color-mix(in oklab, var(--bg-deep) 92%, transparent) 100%
+    ),
+    linear-gradient(
+      to right,
+      color-mix(in oklab, var(--bg-deep) 76%, transparent) 0%,
+      color-mix(in oklab, var(--bg-deep) 30%, transparent) 52%,
+      transparent 100%
+    ),
+    /* And the pool of light the volume stands in. */
+    radial-gradient(
+      52% 46% at 74% 46%,
+      color-mix(in oklab, var(--accent-lit) 12%, transparent) 0%,
+      transparent 72%
+    );
+}
+
+/* A barely-visible dither. Large smooth gradients over a compressed
+   photograph band on 8-bit displays; this is the cheapest fix there is. */
+.tome__grain {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  opacity: 0.5;
+  background-image: radial-gradient(
+    circle at center,
+    rgba(255, 255, 255, 0.045) 0.5px,
+    transparent 0.6px
+  );
+  background-size: 3px 3px;
+}
+
+.tome__inner {
+  position: relative;
+  z-index: 4;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: clamp(1.5rem, 4vh, 2.5rem);
+  width: 100%;
+  max-width: 96rem;
+  margin-inline: auto;
+  min-height: 100svh;
+  padding: calc(var(--topbar-h) + clamp(1rem, 3vh, 2rem))
+    clamp(1.25rem, 5vw, 4.5rem) clamp(1.5rem, 4vh, 2.5rem);
+}
+
+/* --- The trail --------------------------------------------------- */
+.tome__crumbs ol {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.tome__crumbs li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  /* The current page is the last crumb and it can be a long title, so it
+     is the one that is allowed to be cut rather than to wrap the row. */
+  min-width: 0;
+}
+
+.tome__crumbs li:last-child {
+  color: var(--ink-mute);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tome__crumbs a {
+  transition: color var(--dur-fast) var(--ease-subtle);
+}
+
+.tome__crumbs a:hover {
+  color: var(--ink);
+}
+
+.tome__crumb-sep {
+  opacity: 0.5;
+}
+
+.tome__crumbs.bn ol {
+  font-size: 0.8rem;
+  text-transform: none;
+}
+
+/* --- The stage ---------------------------------------------------
+   Stacked below `lg`, with the volume first: on a phone the book is
+   the thing worth seeing above the fold, and the title is directly
+   under it. Two columns above that, the record ranged left against
+   the volume.
+   ---------------------------------------------------------------- */
+.tome__stage {
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: clamp(1.75rem, 5vh, 3rem);
+  text-align: center;
+}
+
+.tome__record {
+  order: 2;
+  max-width: 34rem;
+}
+
+.tome__eyebrow {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.tome__eyebrow.bn {
+  font-size: 0.82rem;
+  text-transform: none;
+}
+
+.tome__title {
+  margin-top: 1rem;
+  font-family: var(--serif);
+  font-size: clamp(2rem, 5.2vw, 4rem);
+  font-weight: 400;
+  line-height: 1.04;
+  letter-spacing: -0.018em;
+  color: var(--ink);
+  /* Long institutional titles are the norm in this collection ("Managing
+     complications in pregnancy and childbirth"), and a title that breaks
+     mid-word reads as a fault. */
+  text-wrap: balance;
+}
+
+.tome__title.bn {
+  font-size: clamp(1.7rem, 4.4vw, 3.2rem);
+  line-height: 1.34;
+  letter-spacing: 0;
+}
+
+.tome__sub {
+  margin-top: 0.9rem;
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: clamp(1rem, 1.6vw, 1.3rem);
+  color: var(--ink-mute);
+}
+
+.tome__sub.bn {
+  font-style: normal;
+}
+
+.tome__by {
+  margin-top: 1.4rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 1rem;
+  color: var(--ink-faint);
+}
+
+.tome__by.bn {
+  font-style: normal;
+}
+
+.tome__by-rule {
+  width: 2.5rem;
+  height: 1px;
+  flex: none;
+  background: var(--line);
+}
+
+.tome__author {
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-color: var(--accent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.32em;
+  transition: text-decoration-color var(--dur-normal) var(--ease-subtle);
+}
+
+.tome__author:hover {
+  text-decoration-color: var(--ink);
+}
+
+.tome__figures {
+  margin-top: 1.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 0.6rem 1.5rem;
+  font-size: 0.82rem;
+  color: var(--ink-mute);
+}
+
+.tome__figures li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.tome__glyph {
+  width: 0.95rem;
+  height: 0.95rem;
+  color: var(--accent-lit);
+}
+
+/* --- The two things anyone came here to do ----------------------
+   Not the app's `Button`: its primary is a filled pink pill tuned
+   for a pale page, and on this ground the accent is the light
+   source rather than the ink. Same shapes as the home hero's pair,
+   for the same reason.
+   ---------------------------------------------------------------- */
+.tome__actions {
+  margin-top: 2rem;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.tome__go,
+.tome__take {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  border-radius: 999px;
+  padding: 0.85rem 1.6rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  transition:
+    background var(--dur-normal) ease,
+    border-color var(--dur-normal) ease,
+    color var(--dur-normal) ease;
+}
+
+.tome__go {
+  background: var(--ink);
+  color: var(--bg-deep);
+}
+
+.tome__go:hover {
+  background: var(--accent-lit);
+}
+
+.tome__take {
+  border: 1px solid var(--line);
+  color: var(--ink);
+}
+
+.tome__take:hover {
+  border-color: var(--ink);
+  background: color-mix(in oklab, var(--ink) 10%, transparent);
+}
+
+.tome__file {
+  margin-top: 0.9rem;
+  font-size: 0.75rem;
+  color: var(--ink-faint);
+}
+
+/* --- The volume -------------------------------------------------- */
+.tome__vol {
+  order: 1;
+  position: relative;
+  width: clamp(180px, 46vw, 260px);
+}
+
+.tome__bloom {
+  position: absolute;
+  z-index: -1;
+  inset: -28% -42%;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    color-mix(in oklab, var(--accent-lit) 34%, transparent) 0%,
+    transparent 68%
+  );
+  filter: blur(20px);
+}
+
+/* The resting angle: enough turn to show the spine, which is what makes
+   the object read as a book rather than as a cover. Overridden by the
+   scroll-driven turn further down, where there is one. */
+.tome__vol .book3d {
+  --ry: -18deg;
+  --ry-hover: -6deg;
+}
+
+/* --- The cue ----------------------------------------------------- */
+.tome__cue {
+  justify-self: center;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.7rem;
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  transition: color var(--dur-normal) ease;
+}
+
+.tome__cue:hover {
+  color: var(--ink);
+}
+
+.tome__cue.bn {
+  font-size: 0.74rem;
+  text-transform: none;
+}
+
+.tome__cue-rule {
+  width: 1px;
+  height: 2.5rem;
+  background: currentcolor;
+  transform-origin: top;
+  /* Shares the home hero's keyframe: one idea, one definition. */
+  animation: cue-run 2.4s var(--ease-in-out) infinite;
+}
+
+@media (min-width: 1024px) {
+  .tome__stage {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    justify-items: start;
+    gap: clamp(2rem, 6vw, 5rem);
+    text-align: start;
+  }
+
+  .tome__record {
+    order: 1;
+  }
+
+  .tome__vol {
+    order: 2;
+    justify-self: end;
+    width: clamp(210px, 20vw, 320px);
+    /* The only thing in this act that moves on a clock rather than on the
+       scroll, and the reason the book does not look switched off when the
+       reader stops. A period nothing else on the page shares. */
+    animation: tome-float 12.5s var(--ease-subtle) infinite;
+  }
+
+  @keyframes tome-float {
+    0%,
+    100% {
+      transform: translate3d(0, -1.2%, 0);
+    }
+    50% {
+      transform: translate3d(0, 1.6%, 0);
+    }
+  }
+
+  .tome__figures,
+  .tome__actions {
+    justify-content: flex-start;
+  }
+}
+
+/* A short window. The plate is one screen by design and a laptop's screen
+   is a good deal shorter than the one this was drawn on; the same
+   composition with the air taken out is cheaper than a second layout and
+   cannot drift away from the first. */
+@media (min-width: 1024px) and (max-height: 820px) {
+  .tome__inner {
+    gap: clamp(0.75rem, 2vh, 1.5rem);
+  }
+
+  .tome__title {
+    font-size: clamp(1.8rem, 3.6vw, 2.6rem);
+  }
+
+  .tome__figures {
+    margin-top: 1rem;
+  }
+
+  .tome__actions {
+    margin-top: 1.25rem;
+  }
+
+  .tome__vol {
+    width: clamp(170px, 15vw, 240px);
+  }
+
+  .tome__cue-rule {
+    height: 1.75rem;
+  }
+}
+
+/* --- The entrance ------------------------------------------------
+   Clock-driven, and it has to be: nothing has been scrolled when
+   this plays. Each part a beat behind the one above it, sharing the
+   home hero's keyframe rather than declaring a second one.
+   ---------------------------------------------------------------- */
+.tome__eyebrow,
+.tome__title,
+.tome__sub,
+.tome__by,
+.tome__figures,
+.tome__actions,
+.tome__file,
+.tome__cue {
+  animation: cinema-fade-up 1s var(--ease-out) both;
+}
+
+.tome__eyebrow {
+  animation-delay: 0.1s;
+}
+.tome__title {
+  animation-delay: 0.2s;
+}
+.tome__sub {
+  animation-delay: 0.32s;
+}
+.tome__by {
+  animation-delay: 0.42s;
+}
+.tome__figures {
+  animation-delay: 0.52s;
+}
+.tome__actions {
+  animation-delay: 0.62s;
+}
+.tome__file {
+  animation-delay: 0.72s;
+}
+.tome__cue {
+  animation-delay: 0.9s;
+}
+
+/* =================================================================
+   Act II: three plates and a paragraph
+
+   The reference site's own layout, and the proportions are its
+   proportions: three tall pictures across most of the width, then a
+   narrow column of small type ranged against the last one. Ours are
+   the cover, the subject and the imprint, and the imprint is where
+   the licence and the source are finally shown: these are other
+   people's publications and the attribution is a condition of the
+   licence rather than a courtesy.
+   ================================================================= */
+.tome__panels {
+  max-width: 96rem;
+  margin-inline: auto;
+  padding: clamp(3.5rem, 10vh, 7rem) clamp(1.25rem, 5vw, 4.5rem)
+    clamp(1rem, 3vh, 2rem);
+}
+
+.tome__panel-row {
+  display: grid;
+  gap: clamp(1.25rem, 2.5vw, 2rem);
+}
+
+@media (min-width: 700px) {
+  .tome__panel-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1100px) {
+  .tome__panel-row {
+    /* Three equal plates and a column about half a plate wide, which is
+       the reference's own ratio. */
+    grid-template-columns: repeat(3, minmax(0, 1fr)) minmax(0, 0.62fr);
+    align-items: start;
+  }
+}
+
+.tome__panel {
+  margin: 0;
+}
+
+.tome__panel-frame {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 3 / 4;
+  background: var(--surface-2);
+  border-radius: 2px;
+}
+
+.tome__panel-img {
+  object-fit: cover;
+}
+
+/* The third plate is a list rather than a picture, and it is set to the
+   same frame so the row reads as three objects of one kind. Blush ground
+   and a hairline: on a page this pale a white panel would be the
+   brightest thing on it. */
+.tome__panel:last-of-type .tome__panel-frame {
+  background: linear-gradient(180deg, var(--surface) 0%, var(--bg-deep) 100%);
+  border: 1px solid var(--line-soft);
+}
+
+.tome__imprint {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1rem;
+  padding: clamp(1.25rem, 2vw, 2rem);
+}
+
+.tome__imprint-row {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.tome__imprint-row dt {
+  font-size: 0.58rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.tome__imprint-row dd {
+  font-family: var(--serif);
+  font-size: 0.95rem;
+  line-height: 1.4;
+  color: var(--ink);
+}
+
+.tome__imprint.bn .tome__imprint-row dt {
+  font-size: 0.72rem;
+  text-transform: none;
+}
+
+.tome__imprint-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 0.25em;
+  text-decoration-thickness: 1px;
+}
+
+.tome__panel-cap {
+  display: grid;
+  gap: 0.35rem;
+  margin-top: 0.8rem;
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.tome__panel-cap.bn {
+  font-size: 0.74rem;
+  text-transform: none;
+}
+
+/* The photographer's name. Smaller and untracked: it is a credit, it has
+   to be present and readable, and it is not a label. */
+.tome__panel-credit {
+  font-size: 0.66rem;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  line-height: 1.5;
+  color: color-mix(in oklab, var(--ink-faint) 80%, transparent);
+}
+
+.tome__note {
+  align-self: start;
+}
+
+.tome__note-eyebrow {
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.tome__note-eyebrow.bn {
+  font-size: 0.74rem;
+  text-transform: none;
+}
+
+/* Small type, and it can be: it is one paragraph with white space on
+   three sides of it, which is the only condition under which small type
+   is comfortable. */
+.tome__note-text {
+  margin-top: 0.9rem;
+  font-size: 0.86rem;
+  line-height: 1.75;
+  color: var(--ink-mute);
+}
+
+.tome__note-cta {
+  margin-top: 1.1rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--ink);
+  border-bottom: 1px solid var(--accent);
+  padding-bottom: 0.2rem;
+  transition: gap var(--dur-normal) var(--ease-out);
+}
+
+.tome__note-cta:hover {
+  gap: 0.7rem;
+}
+
+/* =================================================================
+   Act III: the statement
+
+   A short italic line, then the same sentence finished four times
+   larger in tracked capitals, both ranged hard against the left
+   gutter. The reference sets a marketing phrase this way; this sets
+   the only claim the library makes.
+   ================================================================= */
+.tome__statement {
+  max-width: 96rem;
+  margin-inline: auto;
+  padding: clamp(2.5rem, 8vh, 6rem) clamp(1.25rem, 5vw, 4.5rem)
+    clamp(3.5rem, 10vh, 7rem);
+}
+
+.tome__statement-line {
+  display: grid;
+  justify-items: start;
+}
+
+/* Each line gets a mask of its own, because the reveal below slides it up
+   from under its own edge and an element cannot clip itself.
+
+   The mask carries the type size and the text inside it is set to `1em`.
+   That looks like indirection and it is the point: every offset here is
+   in ems of the line being hidden, and on the text itself those ems would
+   resolve against a box that is not the one doing the clipping.
+
+   The negative margin with equal padding is the reference site's own
+   trick. Without it the mask clips the ascenders and descenders of the
+   line it is meant only to hide, which on a Bengali conjunct takes the
+   matra off the top of every letter. */
+.tome__mask {
+  display: block;
+  overflow: hidden;
+  max-width: 100%;
+  margin: -0.18em;
+  padding: 0.18em;
+}
+
+.tome__mask--lead {
+  font-size: clamp(1.8rem, 5.6vw, 4.4rem);
+}
+
+.tome__mask--word {
+  font-size: clamp(2.6rem, 11vw, 9rem);
+  /* Tucked up under the italic line so the two read as one sentence
+     rather than as a heading with a kicker over it. On the mask, not on
+     the text inside it: on the text it would drag the line up under its
+     own clip and behead it. */
+  margin-top: -0.3em;
+}
+
+.tome__script,
+.tome__caps {
+  display: block;
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 1em;
+}
+
+.tome__script {
+  font-style: italic;
+  line-height: 1.02;
+  letter-spacing: -0.01em;
+  color: var(--ink-faint);
+}
+
+.tome__caps {
+  line-height: 0.98;
+  letter-spacing: 0.005em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+
+/* Bengali. Three separate problems, and the `.bn` class is on the line
+   rather than on either span, so all of it is written as a descendant.
+
+   There are no capitals in the script, so `text-transform` is a no-op and
+   the size has to come down on its own. There is no italic either, and a
+   browser asked for one synthesises a slant, which on a script whose
+   letters hang from a headline reads as a rendering fault. And the marks
+   above and below the baseline need both the leading and the mask's own
+   clearance back, or the clip takes the top off the line. */
+.tome__statement-line.bn .tome__mask {
+  margin: -0.34em;
+  padding: 0.34em;
+}
+
+.tome__statement-line.bn .tome__mask--lead {
+  font-size: clamp(1.5rem, 4.6vw, 3.4rem);
+}
+
+.tome__statement-line.bn .tome__mask--word {
+  font-size: clamp(1.9rem, 6.4vw, 5rem);
+  margin-top: -0.2em;
+}
+
+.tome__statement-line.bn .tome__script,
+.tome__statement-line.bn .tome__caps {
+  font-style: normal;
+  text-transform: none;
+  line-height: 1.3;
+}
+
+/* =================================================================
+   Act IV: the record
+
+   Deliberately not the same facts as the imprint plate above. That
+   one is the publication; this is the copy in *this* library: how
+   long it is, what the file is, where the printed one stands and how
+   often it is taken. Two of the figures have a scale, and on those
+   the hairline under the row is the scale.
+   ================================================================= */
+.tome__record-band {
+  max-width: 96rem;
+  margin-inline: auto;
+  padding: clamp(2.5rem, 7vh, 4.5rem) clamp(1.25rem, 5vw, 4.5rem);
+  display: grid;
+  gap: clamp(2rem, 5vh, 3rem);
+  border-top: 1px solid var(--line-soft);
+}
+
+@media (min-width: 900px) {
+  .tome__record-band {
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+    column-gap: clamp(2.5rem, 7vw, 6rem);
+    align-items: start;
+  }
+
+  .tome__record-head {
+    grid-column: 1 / -1;
+  }
+}
+
+.tome__band-eyebrow {
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.tome__band-eyebrow.bn {
+  font-size: 0.76rem;
+  text-transform: none;
+}
+
+.tome__band-title {
+  margin-top: 0.7rem;
+  font-family: var(--serif);
+  font-size: clamp(1.6rem, 3.2vw, 2.4rem);
+  font-weight: 400;
+  line-height: 1.12;
+  letter-spacing: -0.015em;
+  color: var(--ink);
+}
+
+.tome__band-title.bn {
+  line-height: 1.34;
+}
+
+.tome__spec {
+  border-top: 1px solid var(--line-soft);
+}
+
+.tome__spec-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-block: 0.8rem;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.tome__spec-row[data-measured] {
+  position: relative;
+  border-bottom-color: transparent;
+}
+
+/* The measure. `--share` of the rule drawn in the accent and the rest in
+   the line colour, so the scale *is* the divider rather than an extra
+   object sitting under it. */
+.tome__spec-row[data-measured]::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  inset-block-end: 0;
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    var(--accent) 0 var(--share, 0%),
+    var(--line-soft) var(--share, 0%) 100%
+  );
+}
+
+.tome__spec-label {
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.tome__spec-label.bn,
+.tome__spec.bn .tome__spec-label {
+  font-size: 0.76rem;
+  text-transform: none;
+}
+
+.tome__spec-value {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  text-align: end;
+}
+
+.tome__spec-figure {
+  font-family: var(--serif);
+  font-size: 1.1rem;
+  color: var(--ink);
+}
+
+.tome__spec-unit {
+  font-size: 0.58rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.tome__spec.bn .tome__spec-unit {
+  font-size: 0.72rem;
+  text-transform: none;
+}
+
+.tome__copies {
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-2xl, 1.25rem);
+  background: linear-gradient(180deg, var(--surface) 0%, var(--bg-deep) 100%);
+  padding: 1.5rem;
+}
+
+.tome__copies-title {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.tome__copies-line {
+  margin-top: 0.5rem;
+  font-size: 0.92rem;
+  line-height: 1.7;
+  color: var(--ink-mute);
+}
+
+/* One element, not two: the fill is a gradient stop rather than a nested
+   box, which is the same idea as the measured rule above and one fewer
+   thing in the DOM. */
+.tome__copies-bar {
+  margin-top: 1.1rem;
+  height: 0.5rem;
+  border-radius: 999px;
+  background: linear-gradient(
+    to right,
+    var(--accent) 0 var(--share, 0%),
+    var(--line) var(--share, 0%) 100%
+  );
+}
+
+/* =================================================================
+   Act V: the sponsor
+
+   A band of its own. The advert used to sit beside the metadata,
+   squeezed into a 300px column, which was the worst of both: a
+   reader who came for the chapter on haemorrhage scrolled past it
+   anyway, and a reader curious about the box could not see it. Here
+   the page has already delivered the book and the licence, so the
+   sponsor can be given a room and still not be in anyone's way.
+   ================================================================= */
+.tome__sponsor {
+  border-block: 1px solid var(--line-soft);
+  background: var(--bg-deep);
+  padding: clamp(2.5rem, 7vh, 4.5rem) clamp(1.25rem, 5vw, 4.5rem);
+  display: grid;
+  gap: clamp(2rem, 5vw, 3.5rem);
+}
+
+.tome__sponsor > * {
+  max-width: 96rem;
+  width: 100%;
+  margin-inline: auto;
+}
+
+.tome__sponsor-lead {
+  margin-top: 1.1rem;
+  max-width: 44rem;
+  font-size: 0.98rem;
+  line-height: 1.8;
+  color: var(--ink-mute);
+}
+
+.tome__ad {
+  width: 100%;
+  max-width: 22rem;
+}
+
+.tome__sponsor-slot {
+  display: flex;
+  justify-content: center;
+}
+
+@media (min-width: 900px) {
+  .tome__sponsor {
+    max-width: 96rem;
+    margin-inline: auto;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 24rem);
+    align-items: center;
+  }
+
+  .tome__sponsor > * {
+    margin-inline: 0;
+  }
+
+  .tome__sponsor-slot {
+    justify-content: flex-end;
+  }
+}
+
+.tome__courtesy {
+  padding-block: clamp(2rem, 5vh, 3rem);
+}
+
+/* =================================================================
+   What to read next
+   ================================================================= */
+.tome__related {
+  max-width: 96rem;
+  margin-inline: auto;
+  padding: clamp(3rem, 8vh, 5rem) clamp(1.25rem, 5vw, 4.5rem)
+    clamp(4rem, 10vh, 6rem);
+}
+
+.tome__related-grid {
+  margin-top: clamp(1.75rem, 4vh, 2.5rem);
+}
+
+/* `BookGrid3D` brings its own columns, and they are the catalogue's: six
+   across on a wide screen, which is right for sixteen books and wrong for
+   four. Four related titles in a six-column grid is four volumes ranged
+   left with a third of the page empty beside them. */
+@media (min-width: 1024px) {
+  .tome__related-grid .book-grid-3d {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: clamp(1.5rem, 3vw, 2.5rem);
+  }
+}
+
+/* =================================================================
+   The scroll-driven layer.
+
+   Everything above is the complete page. Nothing below applies
+   unless the browser has scroll-driven animations and the reader has
+   not asked for less motion; there is no third state to maintain,
+   because every rule here animates *toward* the way the page already
+   looks without it.
+   ================================================================= */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    /* --- The plate ---------------------------------------------
+       Tied to `exit`, which for an element that is one viewport tall
+       and starts at the top of the document maps exactly onto the
+       first screen of scrolling. See the note at the head of this
+       section.
+
+       The timeline is **named**, and that is not a style choice. An
+       anonymous `view()` resolves its scroller as the subject's
+       nearest ancestor scroll container, and `overflow: hidden` makes
+       one: every element inside this plate would resolve to the plate
+       itself, which never scrolls, and would sit frozen at 0% for the
+       life of the page. Declaring the timeline on the plate resolves
+       its scroller against the plate's *own* ancestors, which is the
+       document, and a name is then visible to every descendant no
+       matter how many clipping boxes are between. The same is true of
+       the two other places below where something inside an
+       `overflow: hidden` box has to move. --- */
+    .tome__plate {
+      view-timeline-name: --plate;
+      view-timeline-axis: block;
+    }
+
+    .tome__still,
+    .tome__vol .book3d__inner,
+    .tome__record {
+      animation-timeline: --plate;
+      animation-range: exit 0% exit 100%;
+    }
+
+    /* The photograph recedes as the page is read, which is the whole of
+       the parallax: it is behind the volume, so it should move less than
+       the volume and in the same direction. */
+    .tome__still {
+      animation-name: tome-recede;
+      animation-timing-function: linear;
+      animation-fill-mode: both;
+      will-change: transform, opacity;
+    }
+
+    @keyframes tome-recede {
+      from {
+        transform: scale(1.1) translate3d(0, 0, 0);
+        opacity: 0.42;
+      }
+      to {
+        transform: scale(1.02) translate3d(0, -4%, 0);
+        opacity: 0.12;
+      }
+    }
+
+    /* A slow turn across the first screen, so the book is still moving
+       whenever the reader is. This overrides Book3D's own resting
+       transform and its hover rule, which is what an animation does to a
+       declared value; the transition goes with it, or the hover rule
+       would try to interpolate every scrubbed frame. */
+    .tome__vol .book3d__inner {
+      transition: none;
+      animation-name: tome-turn;
+      animation-timing-function: linear;
+      animation-fill-mode: both;
+      will-change: transform;
+    }
+
+    @keyframes tome-turn {
+      from {
+        transform: rotateY(-26deg) rotateX(5deg);
+      }
+      to {
+        /* Stops just short of square. Past it the fore-edge comes round
+           instead of the spine, and a book with its pages toward you
+           looks dropped rather than presented. */
+        transform: rotateY(-3deg) rotateX(-4deg);
+      }
+    }
+
+    /* The record leaves before the plate does, so the last thing on
+       screen as the act ends is the volume rather than a paragraph
+       sliding under the next section.
+
+       It is the wrapper that carries this and its children that carry the
+       clock-driven entrance above. That is not tidiness: one element
+       cannot run both, because `animation-name` in the later rule would
+       replace the earlier one outright and the entrance would simply
+       never play. */
+    .tome__record {
+      animation-name: tome-record-out;
+      animation-timing-function: linear;
+      animation-fill-mode: both;
+    }
+
+    @keyframes tome-record-out {
+      0%,
+      55% {
+        opacity: 1;
+        transform: none;
+      }
+      100% {
+        opacity: 0;
+        transform: translate3d(0, -8%, 0);
+      }
+    }
+
+    /* --- The plates --------------------------------------------
+       Each panel a beat behind the one to its left. The stagger is a
+       range offset rather than a delay, because a delay on a
+       scroll-driven animation is time and this timeline has none: it
+       shifts *where* on the scroll the reveal happens. --- */
+    .tome__panel {
+      view-timeline-name: --panel;
+      view-timeline-axis: block;
+      animation: tome-plate-in linear both;
+      animation-timeline: --panel;
+      animation-range: entry calc(6% + var(--lag, 0) * 9%)
+        entry calc(62% + var(--lag, 0) * 9%);
+    }
+
+    @keyframes tome-plate-in {
+      from {
+        opacity: 0;
+        transform: translate3d(0, 42px, 0);
+        clip-path: inset(0 0 24% 0);
+      }
+      to {
+        opacity: 1;
+        transform: none;
+        clip-path: inset(0 0 0 0);
+      }
+    }
+
+    /* The picture inside settles as the frame opens: a still that is
+       already at rest when its frame arrives reads as a slide, and one
+       that is still moving reads as a camera. */
+    .tome__panel-img {
+      animation: tome-plate-settle linear both;
+      animation-timeline: --panel;
+      animation-range: entry calc(6% + var(--lag, 0) * 9%)
+        entry calc(90% + var(--lag, 0) * 9%);
+      will-change: transform;
+    }
+
+    @keyframes tome-plate-settle {
+      from {
+        transform: scale(1.14);
+      }
+      to {
+        transform: scale(1);
+      }
+    }
+
+    /* --- The statement -----------------------------------------
+       Each line rises from under its own mask, the larger one a
+       beat behind. --- */
+    .tome__statement {
+      view-timeline-name: --statement;
+      view-timeline-axis: block;
+    }
+
+    .tome__script {
+      animation: tome-line-rise linear both;
+      /* After the shorthand, not before it: `animation` resets
+         `animation-timeline` to `auto`, and an `auto` timeline with a
+         `view()` range is a document-timeline animation that runs once on
+         load and is never seen again. */
+      animation-timeline: --statement;
+      animation-range: entry 12% entry 70%;
+    }
+
+    .tome__caps {
+      animation: tome-line-rise linear both;
+      animation-timeline: --statement;
+      animation-range: entry 22% entry 84%;
+    }
+
+    @keyframes tome-line-rise {
+      from {
+        transform: translate3d(0, 105%, 0);
+      }
+      to {
+        transform: translate3d(0, 0, 0);
+      }
+    }
+
+    /* --- Everything else ---------------------------------------
+       One rise, one range, and the blocks that get it are the ones
+       that arrive as a unit. --- */
+    .tome__note,
+    .tome__record-head,
+    .tome__spec,
+    .tome__copies,
+    .tome__sponsor-copy,
+    .tome__sponsor-slot,
+    .tome__courtesy,
+    .tome__related-grid {
+      animation: tome-rise linear both;
+      animation-timeline: view();
+      animation-range: entry 4% entry 58%;
+    }
+
+    @keyframes tome-rise {
+      from {
+        opacity: 0;
+        transform: translate3d(0, 30px, 0);
+      }
+      to {
+        opacity: 1;
+        transform: none;
+      }
+    }
+  }
+}
+
+/* A reader who asked for less motion never downloads the film: the query
+   is asked in `AmbientVideo` too, in script, because `display: none` on a
+   `<video autoplay>` does not stop the fetch. This is the other half of
+   the same answer, for the reader who changes the setting with the page
+   already open. */
+@media (prefers-reduced-motion: reduce) {
+  .ambient-video {
+    display: none;
+  }
+}
+
+/* ---------------------------------------------------------------
+   Site header: the bar, and the panel behind it.
+
+   Three things across one row: the menu button, the name, the
+   utilities. The same header at every width; there is no desktop nav
+   that collapses. See the note in `site-header.tsx` for why.
+
+   It is `fixed`, which is what lets the hero run to the top edge of the
+   viewport with the bar floating on it. The cost is that it takes no
+   space in the flow, so `<main>` carries `padding-top: var(--topbar-h)`
+   and any full-bleed hero cancels that with an equal negative margin.
+   One number, declared here, used in three places.
+--------------------------------------------------------------- */
+:root {
+  --topbar-h: 4.5rem;
+}
+
+@media (min-width: 768px) {
+  :root {
+    --topbar-h: 5.25rem;
+  }
+}
+
+/* A hairline at the very top of the document. While it is on screen the
+   bar is transparent; an IntersectionObserver on it is what replaces the
+   scroll listener this would otherwise need. */
+.topbar__sentinel {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 1px;
+  width: 1px;
+  pointer-events: none;
+}
+
+.topbar {
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 60;
+  height: var(--topbar-h);
+  color: var(--ink);
+  transition:
+    background var(--dur-slow) var(--ease-subtle),
+    border-color var(--dur-slow) var(--ease-subtle),
+    color var(--dur-slow) var(--ease-subtle);
+  border-bottom: 1px solid transparent;
+}
+
+/* Solid is the default, and that ordering matters. Most pages have no hero:
+   they begin with ordinary pale content, and a bar that starts transparent
+   with light type on it would be invisible on every one of them until the
+   reader scrolled. So the frosted fill is the base state and the transparent
+   one is opted into: by the page having a hero in it. */
+.topbar {
+  background: color-mix(in oklab, var(--bg) 82%, transparent);
+  backdrop-filter: blur(18px) saturate(140%);
+  border-bottom-color: color-mix(in oklab, var(--line) 60%, transparent);
+}
+
+/* The opt-in. `:has()` lets the bar answer "is there a full-bleed hero on
+   this page?" itself, rather than every page having to remember to tell it
+   through a prop, and a page that forgets a prop gets the wrong chrome,
+   which is exactly the bug this replaces. The band underneath is dark in
+   both themes, so the bar inverts to light type: the one place the header
+   does not use the page's own ink, reading the same exception `.cinema` and
+   `.cine` declare for themselves. Both are named here, because both reach
+   the top edge of the viewport and the bar floats on either.
+
+   The `:not([data-open])` is not redundant. With the panel open the bar sits
+   on the panel's pale ground rather than on the hero, so it needs the page's
+   own ink back, and `:has()` gives this selector enough specificity to beat
+   the `[data-open]` rule below unless the exclusion is stated here. */
+body:has(.cinema, .cine, .tome__plate) .topbar:not([data-lifted]):not([data-open]) {
+  background: linear-gradient(
+    to bottom,
+    rgba(13, 5, 9, 0.55),
+    rgba(13, 5, 9, 0)
+  );
+  backdrop-filter: none;
+  border-bottom-color: transparent;
+  color: #fdeef4;
+}
+
+/* With the panel open the bar sits on the panel's own ground, so it needs
+   neither a fill of its own nor a rule under it. */
+.topbar[data-open] {
+  background: transparent;
+  backdrop-filter: none;
+  border-bottom-color: transparent;
+  color: var(--ink);
+}
+
+/* --- Scrolled: the mark on its own -------------------------------------
+   Once the reader is past the top of the document the bar keeps the logo
+   and lets everything else go. The lockup is already in the middle
+   column of a three-column grid whose outer two are equal, so the sides
+   leaving moves nothing: the name stays exactly where it was.
+
+   Nothing is unreachable. The controls come back on `:hover` anywhere in
+   the bar and on `:focus-within`, and the second one is the important
+   half: an element at `opacity: 0` is still in the tab order, so a
+   reader arriving by keyboard brings the whole row back by tabbing into
+   it, before there is anything to see. `pointer-events` is what stops a
+   click landing on an invisible icon in between.
+
+   The menu button is only hidden where a pointer can bring it back. On a
+   touch screen there is no hover and no way to focus something that is
+   not there, so hiding it would leave a reader who has scrolled with no
+   route into the navigation at all short of going back to the top. There
+   the bar keeps its burger and only the utilities go, which is the same
+   composition minus one small glyph.
+   --------------------------------------------------------------------- */
+.topbar__menu,
+.topbar__utility {
+  transition:
+    opacity var(--dur-normal) var(--ease-subtle),
+    transform var(--dur-normal) var(--ease-subtle);
+}
+
+.topbar[data-lifted]:not([data-open]) .topbar__utility {
+  opacity: 0;
+  transform: translate3d(0.5rem, 0, 0);
+  pointer-events: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .topbar[data-lifted]:not([data-open]) .topbar__menu {
+    opacity: 0;
+    transform: translate3d(-0.5rem, 0, 0);
+    pointer-events: none;
+  }
+}
+
+/* One selector more specific than either rule above, and outside the
+   media query on purpose: on the touch presentation this is what gives
+   the utilities back to a sticky hover or a focused control. */
+.topbar[data-lifted]:not([data-open]):hover .topbar__menu,
+.topbar[data-lifted]:not([data-open]):hover .topbar__utility,
+.topbar[data-lifted]:not([data-open]):focus-within .topbar__menu,
+.topbar[data-lifted]:not([data-open]):focus-within .topbar__utility {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+}
+
+/* The name goes too, leaving the mark alone in the middle.
+
+   `opacity` on its own would not do it: the words would keep their box in
+   the flow and the mark would sit half a lockup to the left of centre,
+   which is worse than leaving the name there. So the name collapses its
+   width as well, and the lockup's own gap closes with it, and what is
+   left is a mark on the page's axis.
+
+   The `max-width` in the resting state is a from-value rather than a
+   constraint. A transition needs one and `none` does not interpolate, so
+   without it this would be a pop. 14rem is comfortably wider than either
+   language's two lines, so nothing is ever clipped at rest.
+
+   Nothing is lost by hiding it: the words are already `aria-hidden`, the
+   link carries the site's name as its accessible name, and the mark is
+   still the link home. */
+.topbar__brand {
+  transition: gap var(--dur-slow) var(--ease-in-out);
+}
+
+.topbar__brand-name {
+  max-width: 14rem;
+  overflow: hidden;
+  transition:
+    opacity var(--dur-normal) var(--ease-subtle),
+    max-width var(--dur-slow) var(--ease-in-out);
+}
+
+.topbar[data-lifted]:not([data-open]) .topbar__brand {
+  gap: 0;
+}
+
+.topbar[data-lifted]:not([data-open]) .topbar__brand-name {
+  opacity: 0;
+  max-width: 0;
+}
+
+.topbar[data-lifted]:not([data-open]):hover .topbar__brand,
+.topbar[data-lifted]:not([data-open]):focus-within .topbar__brand {
+  gap: 0.7rem;
+}
+
+.topbar[data-lifted]:not([data-open]):hover .topbar__brand-name,
+.topbar[data-lifted]:not([data-open]):focus-within .topbar__brand-name {
+  opacity: 1;
+  max-width: 14rem;
+}
+
+.topbar__row {
+  display: grid;
+  /* Three columns, and the outer two are the same width so the middle one
+     is centred on the page rather than on what is left over. `1fr` on both
+     sides would centre the name between two unequal blocks, which reads as
+     very slightly wrong in a way that is hard to place. */
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  height: 100%;
+  padding-inline: clamp(0.9rem, 3vw, 2.25rem);
+  gap: 0.75rem;
+}
+
+/* --- Left: the menu button ---------------------------------------- */
+.topbar__menu {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.85rem;
+  justify-self: start;
+  padding: 0.5rem 0.6rem 0.5rem 0;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  color: inherit;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.topbar__menu:focus-visible {
+  outline: 2px solid currentcolor;
+  outline-offset: 4px;
+  border-radius: 0.4rem;
+}
+
+/* Two rules, not three. Three is the convention and two is the reference's
+   own choice, and two reads as a mark rather than as a list, which is the
+   right note next to a name set in a serif. */
+.topbar__burger {
+  display: grid;
+  gap: 4px;
+  width: 1.6rem;
+}
+
+.topbar__burger > span {
+  display: block;
+  height: 1px;
+  background: currentcolor;
+  transition: transform var(--dur-normal) var(--ease-in-out);
+}
+
+.topbar[data-open] .topbar__burger > span:first-child {
+  transform: translateY(2.5px) rotate(9deg);
+}
+
+.topbar[data-open] .topbar__burger > span:last-child {
+  transform: translateY(-2.5px) rotate(-9deg);
+}
+
+.topbar__menu-word {
+  display: none;
+}
+
+@media (min-width: 640px) {
+  .topbar__menu-word {
+    display: inline;
+  }
+}
+
+/* --- Middle: the name --------------------------------------------- */
+.topbar__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  justify-self: center;
+  color: inherit;
+}
+
+.topbar__brand-mark {
+  width: 1.6rem;
+  height: 1.6rem;
+  flex: none;
+}
+
+.topbar__brand-name {
+  display: grid;
+  justify-items: start;
+  line-height: 1.05;
+}
+
+/* Set in the serif, tracked wide, in two lines: the second smaller and
+   tracked wider still, so the lockup reads as a masthead rather than as a
+   two-word label. */
+.topbar__brand-line {
+  font-family: var(--serif);
+  font-size: 1.02rem;
+  font-weight: 400;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.topbar__brand-sub {
+  font-size: 0.54rem;
+  font-weight: 600;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  opacity: 0.78;
+}
+
+/* Bengali has no capitals, and it takes no tracking: the global `.bn` rule
+   handles the tracking; this is the rest of it. The second line also needs a
+   size back: 0.54rem is a small-caps size for Latin and simply illegible for
+   a Bengali conjunct, which carries marks above and below the baseline. */
+.bn .topbar__brand-line,
+.bn .topbar__brand-sub {
+  text-transform: none;
+}
+
+.bn .topbar__brand-line {
+  font-size: 1.06rem;
+  line-height: 1.3;
+}
+
+.bn .topbar__brand-sub {
+  font-size: 0.66rem;
+  line-height: 1.3;
+}
+
+/* --- Right: the utilities ----------------------------------------- */
+.topbar__utility {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  justify-self: end;
+}
+
+.topbar__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 999px;
+  color: inherit;
+  opacity: 0.82;
+  transition: opacity var(--dur-normal) ease, background var(--dur-normal) ease;
+}
+
+.topbar__icon:hover {
+  opacity: 1;
+  background: color-mix(in oklab, currentcolor 12%, transparent);
+}
+
+/* --- The panel ---------------------------------------------------- */
+.sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 55;
+  display: grid;
+  align-content: center;
+  padding: calc(var(--topbar-h) + 2rem) clamp(1.25rem, 6vw, 5rem) 3rem;
+  background: var(--bg);
+  /* Clipped away rather than hidden, so the links inside can animate in on
+     their own clocks. `inert` in the markup is what keeps them out of the
+     tab order while it is shut: `visibility` alone would not, and
+     unmounting would mean no exit animation at all. */
+  clip-path: inset(0 0 100% 0);
+  opacity: 0;
+  transition:
+    clip-path var(--dur-slow) var(--ease-in-out),
+    opacity var(--dur-normal) ease;
+}
+
+.sheet[data-open] {
+  clip-path: inset(0 0 0 0);
+  opacity: 1;
+}
+
+.sheet__nav {
+  width: 100%;
+  max-width: 72rem;
+  margin-inline: auto;
+}
+
+.sheet__list {
+  display: grid;
+  gap: 0.15rem;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  counter-reset: none;
+}
+
+.sheet__item {
+  overflow: hidden;
+}
+
+.sheet__link {
+  display: flex;
+  align-items: baseline;
+  gap: clamp(0.9rem, 3vw, 2.25rem);
+  padding: 0.35rem 0;
+  font-family: var(--serif);
+  font-size: clamp(1.9rem, 6vw, 3.9rem);
+  font-weight: 400;
+  line-height: 1.16;
+  letter-spacing: 0.02em;
+  color: var(--ink-mute);
+  transform: translate3d(0, 105%, 0);
+  transition:
+    color var(--dur-normal) ease,
+    transform var(--dur-slow) var(--ease-title);
+  /* Each link is a beat later than the one above it, so the list arrives
+     as a cascade rather than as a block. */
+  transition-delay: 0s, calc(0.05s * var(--i));
+}
+
+.sheet[data-open] .sheet__link {
+  transform: translate3d(0, 0, 0);
+}
+
+.sheet__link:hover,
+.sheet__link[data-active] {
+  color: var(--ink);
+}
+
+.sheet__link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}
+
+.sheet__n {
+  font-family: var(--grotesk);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.sheet__foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+  margin-top: clamp(2.25rem, 6vh, 4rem);
+  padding-top: 1.75rem;
+  border-top: 1px solid var(--line-soft);
+}
+
+.sheet__cta {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.78rem 1.6rem;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-size: 0.92rem;
+  font-weight: 600;
+  box-shadow: var(--shadow-accent);
+  transition: background var(--dur-normal) ease;
+}
+
+.sheet__cta:hover {
+  background: var(--accent-hover);
+}
+
+.sheet__aside {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+}
+
+.sheet__signin {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.92rem;
+  color: var(--ink-mute);
+  transition: color var(--dur-normal) ease;
+}
+
+.sheet__signin:hover {
+  color: var(--ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* The panel still has to open and shut; what goes is the travel. The
+     global kill-switch zeroes the durations, so without this the links
+     would jump in from 105% below rather than simply being there. */
+  .sheet__link {
+    transform: none !important;
+  }
+
+  .topbar__burger > span {
+    transform: none !important;
+  }
+}
+
+/* The hero cancels `<main>`'s top padding so the picture reaches the top
+   edge of the viewport and the fixed bar floats on it. Declared here, next
+   to `--topbar-h`, rather than in the hero's own section: it is a fact
+   about the header, and a reader looking for why the hero starts under the
+   bar will look here. The catalogue's room does the same, in its own
+   section, for the same reason. */
+.cinema {
+  margin-top: calc(-1 * var(--topbar-h));
+}
+
+/* The sign-out control posts a form, so it arrives wrapped in one. `contents`
+   lets the button sit in the utility row directly instead of the form
+   becoming a flex item with its own box. */
+.topbar__utility form {
+  display: contents;
+}

@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" role="img" aria-label="Maternity Book Bank">
+  <!--
+    The tab icon: the same drawing as `components/brand.tsx`, with the tile's
+    gradient baked in. A favicon cannot read the theme tokens, so the three
+    brand hues are written out at their light-mode values: the tile is a
+    saturated object either way, and it has to hold on whatever colour the
+    browser paints its own chrome. `favicon.ico` beside this file carries a
+    bolder cut of the same mark for the 16px slot, where the cradle's arms
+    close up against the boards; see the note in `scripts/build-icons.mjs`.
+  -->
+  <defs>
+    <linearGradient id="tile" x1="4" y1="0" x2="44" y2="48" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fb7185"/>
+      <stop offset="0.55" stop-color="#ec4899"/>
+      <stop offset="1" stop-color="#a21caf"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="48" height="48" rx="11" fill="url(#tile)"/>
+
+  <path d="M22.6 24.6c-1.9-2.7-5-4.3-8.5-4.3H9.2A2.2 2.2 0 0 0 7 22.5v12.2c0 1.2 1 2.2 2.2 2.2h5c3.4 0 6.5 1.6 8.4 4.3z" fill="#fff" fill-opacity="0.96"/>
+  <path d="M25.4 24.6c1.9-2.7 5-4.3 8.5-4.3h4.9a2.2 2.2 0 0 1 2.2 2.2v12.2c0 1.2-1 2.2-2.2 2.2h-5c-3.4 0-6.5 1.6-8.4 4.3z" fill="#fff" fill-opacity="0.96"/>
+  <path d="M16.5 10.9c0 4.14 3.36 7.5 7.5 7.5s7.5-3.36 7.5-7.5" stroke="#fff" stroke-width="3.4" stroke-linecap="round" fill="none"/>
+  <circle cx="24" cy="11.4" r="3.3" fill="#fff"/>
+</svg>

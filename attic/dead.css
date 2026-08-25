@@ -1,0 +1,1142 @@
+/*
+ * Styles for the components in this attic, cut out of `src/app/globals.css`
+ * when they stopped being referenced. Not loaded by anything.
+ *
+ *   .stack3d    → attic/book-stack-3d.tsx
+ *   .coverflow  → attic/book-carousel-3d.tsx
+ *   .hero3d     → attic/hero-3d.tsx
+ *
+ * `@keyframes floater-bob` / `floater-sway` are in here too: they read as
+ * general-purpose, but `.hero3d__floater` was their only user, the closing
+ * CTA's drifting volumes are `.ctafloat__drift`, which has its own.
+ *
+ * If any of it comes back, note that `.book3d`, `.shelf3d` and
+ * `.book-grid-3d` are all still live in globals.css, so a restored component
+ * only needs its own block back.
+ */
+
+/* ===== globals.css lines 627-1085 ===== */
+/* ---------------------------------------------------------------
+   Stack3D: books lying flat, seen from above at an angle.
+
+   Same box algebra as Book3D, one axis over: each volume shows its
+   top board plus the two page edges facing the camera. Used for the
+   hero, where the reference design puts a stack of books.
+---------------------------------------------------------------- */
+.stack3d {
+  perspective: 1800px;
+  perspective-origin: 50% 40%;
+}
+
+.stack3d__scene {
+  position: relative;
+  height: 100%;
+  width: 100%;
+  transform-style: preserve-3d;
+  /* The one place the whole composition's viewing angle is set. */
+  transform: rotateX(58deg) rotateZ(var(--yaw, -34deg));
+  transition: transform 900ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.stack3d:hover .stack3d__scene {
+  transform: rotateX(52deg) rotateZ(calc(var(--yaw, -34deg) + 6deg));
+}
+
+.stack3d__book {
+  position: absolute;
+  transform-style: preserve-3d;
+}
+
+/* Top board: carries the cover art. */
+.stack3d__top {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: 2px 5px 5px 2px;
+  transform: translateZ(var(--t, 18px));
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.14);
+}
+
+/* Fore-edge along the bottom of the volume. */
+.stack3d__edge-front {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  height: var(--t, 18px);
+  transform-origin: center top;
+  transform: rotateX(90deg);
+  background:
+    linear-gradient(
+      to bottom,
+      color-mix(in srgb, var(--spine-color, #4a3524) 100%, transparent) 0 12%,
+      transparent 12% 100%
+    ),
+    repeating-linear-gradient(
+      to bottom,
+      #f6f1e8 0px,
+      #f6f1e8 1px,
+      #d8cebc 1px,
+      #d8cebc 2px
+    );
+  filter: brightness(0.94);
+}
+
+/* Fore-edge along the right of the volume. */
+.stack3d__edge-side {
+  position: absolute;
+  top: 0;
+  left: 100%;
+  width: var(--t, 18px);
+  height: 100%;
+  transform-origin: left center;
+  transform: rotateY(-90deg);
+  background:
+    linear-gradient(
+      to left,
+      color-mix(in srgb, var(--spine-color, #4a3524) 100%, transparent) 0 12%,
+      transparent 12% 100%
+    ),
+    repeating-linear-gradient(
+      to left,
+      #f4efe6 0px,
+      #f4efe6 1px,
+      #d5cbb8 1px,
+      #d5cbb8 2px
+    );
+  filter: brightness(0.86);
+}
+
+/* Ground shadow for the whole stack, cast on the z = 0 plane. */
+.stack3d__ground {
+  position: absolute;
+  inset: -6% -10% -12% -6%;
+  background: radial-gradient(
+    ellipse at 46% 54%,
+    rgba(61, 45, 32, 0.34),
+    rgba(61, 45, 32, 0.1) 48%,
+    transparent 74%
+  );
+  filter: blur(18px);
+}
+
+.dark .stack3d__ground {
+  background: radial-gradient(
+    ellipse at 46% 54%,
+    rgba(0, 0, 0, 0.62),
+    rgba(0, 0, 0, 0.2) 48%,
+    transparent 74%
+  );
+}
+
+/* ---------------------------------------------------------------
+   Coverflow: the featured carousel.
+
+   A ring of covers standing in front of the reader, the middle one
+   face-on and the rest turning away to either side. Same box algebra
+   as the rest of the 3D work: one perspective on the stage, and every
+   panel placed by four numbers handed in from React,
+
+     --x  how far out along the ring, in % of the panel's own width
+     --ry how far turned away, in degrees
+     --a  distance from the middle, unsigned, for shade and gloss
+     --s  scale, so the middle cover is the largest object on screen
+     --op opacity
+
+   Spacing is handed in rather than derived from the index because it
+   is not linear: the first cover out has to clear the middle one,
+   which is both wider (nothing scales it down) and unturned (nothing
+   foreshortens it), so ring one steps further than ring two.
+
+   Transitions are on `transform` and `opacity` only, so advancing the
+   carousel is one compositor job no matter how many covers are up.
+---------------------------------------------------------------- */
+.coverflow {
+  /* One measurement drives the whole stage. The height is the cover's own
+     2:3 board plus the room the front one needs to stand up out of the ring.
+     The book's name is set below the stage rather than on a plate inside it,
+     which is what lets this be tight: nothing hangs off the bottom to be
+     clipped by the overflow that keeps the ring off the page edges. */
+  --panel-w: clamp(11rem, 22vw, 18rem);
+  height: calc(var(--panel-w) * 1.5 + 3rem);
+
+  /* Two numbers for the whole carousel's feel. Short and decisive: a
+     showcase that takes three quarters of a second to answer an arrow key
+     feels broken, however smooth the curve is. The easing lands hard at the
+     end: most of the distance is covered early, so the ring reads as
+     *arriving* rather than as drifting into place. */
+  --cf-dur: 420ms;
+  --cf-ease: cubic-bezier(0.32, 0.72, 0, 1);
+
+  perspective: 1500px;
+  /* Camera a little above the middle of the panel, so the covers are
+     read slightly from above, like books held up in front of you. */
+  perspective-origin: 50% 44%;
+
+  /* The ring is meant to run past both edges. Dissolving it there rather
+     than slicing it is the difference between "there is more of this" and a
+     cover that got cut in half. */
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    #000 7%,
+    #000 93%,
+    transparent
+  );
+}
+
+.coverflow__stage {
+  position: relative;
+  height: 100%;
+  transform-style: preserve-3d;
+}
+
+/* The pool of light the front cover stands in. Drawn on the stage rather than
+   in the panel, so it never turns with the board, and tinted with the accent,
+   so the section has one focal point that the ground itself points at. */
+.coverflow__spot {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: calc(var(--panel-w) * 2.4);
+  height: calc(var(--panel-w) * 1.9);
+  translate: -50% -48%;
+  pointer-events: none;
+  background: radial-gradient(
+    closest-side,
+    color-mix(in srgb, var(--accent) 20%, transparent),
+    transparent 72%
+  );
+}
+
+.coverflow__panel {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: var(--panel-w);
+  /* So each panel can carry its own board thickness in real 3D. */
+  transform-style: preserve-3d;
+  /* Centring first, then the ring placement: the rotation that follows
+     happens about the panel's own axis rather than the stage's. `--y` lifts
+     the front cover clear of the row and settles the turned ones back down
+     into it, which is what makes the middle read as the nearest object
+     rather than as the same cover in a wider slot. */
+  transform: translate(-50%, -50%) translateX(calc(var(--x) * 1%))
+    translateY(calc(var(--y, 0) * 1px)) translateZ(calc(var(--a) * -140px))
+    rotateY(calc(var(--ry) * 1deg)) scale(var(--s));
+  opacity: var(--op);
+  transition: transform var(--cf-dur) var(--cf-ease),
+    opacity calc(var(--cf-dur) * 0.6) linear;
+  will-change: transform, opacity;
+}
+
+/* The cover board itself: a laminated panel with a lit fore-edge. */
+.coverflow__board {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1.15rem;
+  box-shadow: var(--shadow-3), inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+  transition: box-shadow var(--cf-dur) var(--cf-ease);
+}
+
+/* The one in front throws its own colour onto the ground under it. Held tight
+   under the board by the negative spread: any wider and the front cover casts
+   a coloured haze across the turned covers beside it, which reads as a smudge
+   on their art rather than as light. */
+.coverflow__board--front {
+  box-shadow: var(--shadow-4),
+    0 24px 38px -26px color-mix(in srgb, var(--accent) 50%, transparent),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+}
+
+/* "This opens." Nothing on a bare cover says so, and the reader who wants
+   the book is pointing at the cover, not reading the caption below it. */
+.coverflow__open {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0.85rem;
+  z-index: 2;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+  opacity: 0;
+  translate: 0 0.5rem;
+  transition: opacity 220ms ease, translate 220ms var(--cf-ease);
+}
+
+/* A scrim, so the pill lands on shade rather than on the imprint the cover
+   already prints along its foot. Bottom corners only: it has to sit inside
+   the board's own trim. */
+.coverflow__open::before {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  bottom: -0.85rem;
+  z-index: -1;
+  height: 5rem;
+  border-radius: 0 0 1.15rem 1.15rem;
+  background: linear-gradient(
+    to top,
+    rgba(12, 9, 7, 0.6),
+    rgba(12, 9, 7, 0.16) 58%,
+    transparent
+  );
+}
+
+.coverflow__open > span {
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  padding: 0.45rem 1rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  box-shadow: var(--shadow-2);
+}
+
+.coverflow__link:hover .coverflow__open,
+.coverflow__link:focus-visible .coverflow__open {
+  opacity: 1;
+  translate: 0 0;
+}
+
+/* Board thickness.
+   A turned cover shows its own edge, and that edge is what separates a real
+   board from a decal floating in space. Which side is visible depends on which
+   way the cover is turned, so there is one of these per hand: a cover to the
+   left of the middle faces right, and shows its left edge.
+   Both recede away from the reader (hence -90°/90°), so the strip sits behind
+   the board rather than in front of it. */
+.coverflow__edge {
+  position: absolute;
+  top: 1.5%;
+  height: 97%;
+  width: 15px;
+  background-color: var(--edge, #2b2320);
+  background-image: linear-gradient(
+    to right,
+    rgba(0, 0, 0, 0.5),
+    rgba(255, 255, 255, 0.1) 45%,
+    rgba(0, 0, 0, 0.45)
+  );
+}
+
+.coverflow__edge--l {
+  left: 0;
+  transform-origin: left center;
+  transform: rotateY(90deg);
+  border-radius: 3px 0 0 3px;
+}
+
+.coverflow__edge--r {
+  right: 0;
+  transform-origin: right center;
+  transform: rotateY(-90deg);
+  border-radius: 0 3px 3px 0;
+}
+
+/* Specular sweep, angled to match the panel's own turn. Off the middle
+   panel: a highlight belongs on the object being looked at. */
+.coverflow__gloss {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    108deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.22) 46%,
+    rgba(255, 255, 255, 0.04) 56%,
+    transparent 68%
+  );
+  /* Barely there on the cover being read; strong on the turned ones, where a
+     laminated board really would catch the light edge-on. */
+  opacity: calc(0.1 + var(--a) * 0.18);
+  transition: opacity var(--cf-dur) ease;
+}
+
+/* Panels behind the middle one sit in its shade. Depth is carried by shade and
+   scale rather than by transparency: covers faded into the page ground read as
+   half-loaded images, not as objects standing further back. */
+.coverflow__shade {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: rgba(20, 14, 9, 0.55);
+  opacity: calc(var(--a) * 0.28);
+  transition: opacity var(--cf-dur) ease;
+}
+
+/* ---- The handle on a turned cover ------------------------------
+   Side covers are inert, so their button sits over them rather than in them.
+   Nothing about a cover says "click to bring this one forward", so the button
+   draws its own edge when pointed at. */
+.coverflow__pick::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 1.15rem;
+  pointer-events: none;
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--accent) 75%, transparent),
+    0 12px 30px -14px color-mix(in srgb, var(--accent) 60%, transparent);
+  opacity: 0;
+  transition: opacity 200ms ease;
+}
+
+.coverflow__pick:hover::after,
+.coverflow__pick:focus-visible::after {
+  opacity: 1;
+}
+
+/* ---- Caption ---------------------------------------------------
+   The featured book's name, set below the stage in the page's own type. Out
+   here it is crisp (text inside a rotated, scaled 3D panel is not), it can be
+   as long as it likes, and it cannot collide with the neighbouring covers the
+   way a plate hanging off the board did. */
+.coverflow__caption {
+  animation: cf-caption-in 340ms var(--cf-ease) both;
+}
+
+@keyframes cf-caption-in {
+  from {
+    opacity: 0;
+    transform: translateY(9px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ---- Dots ------------------------------------------------------
+   The active dot doubles as the clock: while the ring is turning on its own,
+   its fill runs down over exactly one interval, so the movement is never a
+   surprise. Paused (by the button, by a pointer resting on the stage, or by
+   `prefers-reduced-motion`) it simply sits full. */
+.coverflow__dot {
+  position: relative;
+  height: 0.375rem;
+  width: 0.375rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--line);
+  transition: width var(--cf-dur) var(--cf-ease), background-color 200ms ease;
+}
+
+.coverflow__dot:hover {
+  background: var(--ink-faint);
+}
+
+.coverflow__dot[data-current="true"] {
+  width: 2rem;
+  background: color-mix(in srgb, var(--accent) 24%, var(--line));
+}
+
+.coverflow__dot-fill {
+  position: absolute;
+  inset: 0;
+  transform-origin: left center;
+  background: var(--accent);
+}
+
+.coverflow__dot-fill--timed {
+  animation: cf-dot-fill linear both;
+}
+
+@keyframes cf-dot-fill {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+/* The ground the ring stands on: one pool of light, no floor plane. A
+   drawn floor would need a horizon, and the section has none. */
+.coverflow__floor {
+  position: absolute;
+  inset: auto 0 -4% 0;
+  height: 22%;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse at 50% 40%,
+    rgba(61, 45, 32, 0.28),
+    rgba(61, 45, 32, 0.08) 45%,
+    transparent 72%
+  );
+  filter: blur(14px);
+}
+
+.dark .coverflow__floor {
+  background: radial-gradient(
+    ellipse at 50% 40%,
+    rgba(0, 0, 0, 0.6),
+    rgba(0, 0, 0, 0.2) 45%,
+    transparent 72%
+  );
+}
+
+
+/* ===== globals.css lines 1840-2068 ===== */
+/* ---------------------------------------------------------------
+   Hero: the scrolling scene.
+
+   A tall empty track with one screen-height panel stuck to the top
+   of it. Scrolling the track moves nothing on screen; it moves a
+   number, which `components/hero-3d.tsx` hands to the WebGL scene
+   and writes back here as `--b0`/`--b1`/`--b2` so the three blocks
+   of copy cross-fade in step with what the scene is doing.
+
+   The panel is complete before any of that: the headline, the lead,
+   the buttons and the stats are server-rendered DOM at full opacity,
+   with the static book pile beside them. The canvas fades in over
+   the top once three.js has loaded and drawn a frame, and the pile
+   fades out under it. Nothing on this page ever waits for WebGL.
+
+   Layout is one row of two columns, everything sharing it:
+     column 1  the headline block (beat 0)
+     column 2  the static pile, and, once live, roughly where the
+               scene puts the volume
+     spanning  beats 1 and 2, centred across the full width
+---------------------------------------------------------------- */
+.hero3d {
+  --beats: 3.4;
+  position: relative;
+  height: calc(var(--beats) * 100svh);
+}
+
+@media (max-width: 767px) {
+  /* A phone scrolls a screen in far fewer pixels; the same beat count
+     would make the hero feel like a tunnel. */
+  .hero3d {
+    --beats: 2.8;
+  }
+}
+
+.hero3d__pin {
+  --b0: 1;
+  --b1: 0;
+  --b2: 0;
+  position: sticky;
+  top: 0;
+  height: 100svh;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.hero3d__canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  opacity: 0;
+  transition: opacity 900ms ease;
+}
+
+.hero3d[data-live="true"] .hero3d__canvas {
+  opacity: 1;
+}
+
+/* Below `lg` this is two *rows*, not one: the copy on top, the volume under
+   it. It used to be one row that the copy and the volume shared, which is
+   correct on a wide viewport (they are side by side there), but on a phone
+   put the book squarely on top of the headline, and a WebGL cover behind
+   three lines of type is unreadable type. The scene puts its own volume in
+   the lower part of the frame to match (see `heroOffsetY` in hero-scene.ts). */
+.hero3d__stage {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: auto 1fr;
+  align-items: start;
+  gap: 1.5rem;
+  height: 100%;
+  max-width: 80rem;
+  margin-inline: auto;
+  padding: 5rem 1.25rem 4rem;
+}
+
+@media (min-width: 1024px) {
+  .hero3d__stage {
+    grid-template-columns: 1.05fr 0.95fr;
+    grid-template-rows: 1fr;
+    align-items: center;
+    gap: 2rem;
+    padding-inline: 2rem;
+  }
+}
+
+/* Both children share the one grid cell row; the copy spans the whole
+   width so beats 1 and 2 can centre on the panel rather than on the
+   headline's column. */
+.hero3d__copy {
+  grid-row: 1;
+  grid-column: 1 / -1;
+  align-self: start;
+  display: grid;
+  /* The container must not swallow clicks meant for the scene or the
+     page; only the block that is actually showing takes them back. */
+  pointer-events: none;
+}
+
+/* Row 2 on a phone: under the copy rather than behind it. The height is what
+   is actually left over once the headline, the lead, two buttons and the stats
+   have had the top of the panel, so it is measured against the row and not
+   against the viewport; `min-height: 0` lets it be squeezed on a short screen
+   instead of pushing the copy up off the top. */
+.hero3d__fallback {
+  grid-row: 2;
+  grid-column: 1 / -1;
+  align-self: stretch;
+  min-height: 0;
+  height: auto;
+  transition: opacity 700ms ease;
+}
+
+@media (min-width: 1024px) {
+  .hero3d__copy {
+    align-self: center;
+  }
+
+  .hero3d__fallback {
+    grid-row: 1;
+    grid-column: 2;
+    align-self: center;
+    height: min(72svh, 34rem);
+  }
+}
+
+.hero3d[data-live="true"] .hero3d__fallback {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.hero3d__beat {
+  grid-area: 1 / 1;
+  align-self: center;
+  /* Hidden rather than transparent between beats: an invisible block of
+     copy that still takes tab focus is a keyboard trap. `--b*` handles
+     the cross-fade, `data-beat` the discrete swap, and the thresholds
+     for the two sit in the gaps between the fades. */
+  visibility: hidden;
+  will-change: opacity, transform;
+}
+
+.hero3d__pin[data-beat="0"] .hero3d__beat[data-b="0"],
+.hero3d__pin[data-beat="1"] .hero3d__beat[data-b="1"],
+.hero3d__pin[data-beat="2"] .hero3d__beat[data-b="2"] {
+  visibility: visible;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.hero3d__beat[data-b="0"] {
+  opacity: var(--b0);
+  transform: translateY(calc((1 - var(--b0)) * 26px));
+  justify-self: start;
+  max-width: 36rem;
+}
+
+.hero3d__beat[data-b="1"] {
+  opacity: var(--b1);
+  transform: translateY(calc((1 - var(--b1)) * 26px));
+}
+
+/* ---------------------------------------------------------------------
+   Beat 2: the newest arrivals, read out as records.
+
+   Not a `.hero3d__beat`, because the beats share one grid cell with the
+   static composition and this block is far too tall to sit in it. Instead
+   it owns the whole pinned screen at the end of the scroll, by which point
+   every beat inside the copy grid has faded out. Same `--b2` ramp, same
+   `data-beat` gate on focus and clicks: a panel that is invisible but
+   still tabbable is a keyboard trap.
+
+   When the hero is not pinned at all (reduced motion, or no WebGL) the
+   rules further down turn this back into an ordinary block that flows
+   under the hero, so these books are on the page for every reader.
+   ------------------------------------------------------------------- */
+.hero3d__recent {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: grid;
+  /* `safe` matters here: on a short screen a centred overflowing grid
+     clips its own top, and the top is the heading. */
+  align-content: safe center;
+  justify-items: center;
+  gap: 1.75rem;
+  /* The top pad clears the site header. This panel fills the pinned screen,
+     which starts under a 72px sticky header: at 1.5rem the block's own
+     heading was behind it. */
+  padding: max(5.5rem, 4svh) 1.25rem max(1.5rem, 4svh);
+  /* Scrollable rather than clipped on a short screen, and chaining is
+     left on deliberately, so a touch that runs past the last row carries
+     on scrolling the page out of the hero instead of dead-ending. */
+  overflow-y: auto;
+  opacity: var(--b2);
+  transform: translateY(calc((1 - var(--b2)) * 26px));
+  visibility: hidden;
+  pointer-events: none;
+}
+
+@media (min-width: 640px) {
+  .hero3d__recent {
+    padding-inline: 2rem;
+  }
+}
+
+.hero3d__pin[data-beat="2"] .hero3d__recent {
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.hero3d__recent-cta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.hero3d__beat--centre {
+  justify-self: center;
+  max-width: 44rem;
+  text-align: center;
+}
+
+
+/* ===== globals.css lines 2224-2489 ===== */
+/* --- Floating 3D books in beat-0 ----------------------------------
+   Absolutely positioned in the right half of the pinned panel, behind
+   the canvas (z-index 1) until WebGL loads, at which point the canvas
+   fades in over them. Each book drifts on its own clock so they never
+   fall into step with each other. Only shown on desktop: below lg there
+   is no room beside the headline without overlapping the text.
+   ------------------------------------------------------------------- */
+.hero3d__floaters {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .hero3d__floaters {
+    display: block;
+    position: absolute;
+    inset: 0;
+    z-index: 10; /* above the canvas (z-index: 1) and the stage (z-index: 2) so floater <Link>s receive clicks */
+    pointer-events: none;
+    transition: opacity 700ms ease;
+  }
+}
+
+.hero3d__floater {
+  position: absolute;
+  left: var(--fx, 60%);
+  top: var(--fy, 20%);
+  width: var(--fw, 140px);
+  pointer-events: auto;
+  /* Gentle float: up-down on one period, slight tilt on another prime, the
+     two periods are coprime so the books never sync. */
+  animation:
+    floater-bob var(--fdur, 14s) ease-in-out var(--fdelay, 0s) infinite alternate,
+    floater-sway calc(var(--fdur, 14s) * 1.37) ease-in-out var(--fdelay, 0s) infinite alternate;
+}
+
+@keyframes floater-bob {
+  from { transform: translateY(0);    }
+  to   { transform: translateY(-18px); }
+}
+
+@keyframes floater-sway {
+  from { transform: rotate(-1.5deg); }
+  to   { transform: rotate(1.5deg);  }
+}
+
+/* When WebGL canvas is live, the floaters stay above the canvas (z-index: 2)
+   so their <Link> elements can still receive pointer events. The canvas fades
+   in over the scene; the floater opacity transition handles their visual
+   fade-out as scroll progress advances past beat-0. */
+
+/* Kill the float animation under reduced motion. The books still show
+   as static covers (Book3D degrades to a flat face). */
+@media (prefers-reduced-motion: reduce) {
+  .hero3d__floaters {
+    display: none;
+  }
+}
+
+.hero3d__hint {  position: absolute;
+  bottom: 1.75rem;
+  left: 50%;
+  z-index: 3;
+  display: flex;
+  translate: -50% 0;
+  align-items: center;
+  gap: 0.7rem;
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  opacity: var(--b0);
+}
+
+.hero3d__hint-rail {
+  position: relative;
+  display: block;
+  width: 1px;
+  height: 2.4rem;
+  overflow: hidden;
+  background: var(--line);
+}
+
+/* A single mote running down the rail: the one thing on this page that
+   animates on a clock rather than on scroll, because it is what tells
+   the reader that scrolling is what the panel is for. */
+.hero3d__hint-rail::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  height: 40%;
+  background: var(--accent);
+  animation: hero3d-hint 1.9s ease-in-out infinite;
+}
+
+@keyframes hero3d-hint {
+  0% {
+    transform: translateY(-100%);
+  }
+  60%,
+  100% {
+    transform: translateY(250%);
+  }
+}
+
+/* Reduced motion, and the rare browser with no WebGL at all: the track
+   collapses to one screen and the panel becomes the ordinary two-column
+   hero it already contains. Done here rather than in script so a reader
+   who asked for less motion never sees a four-screen page flash first. */
+@media (prefers-reduced-motion: reduce) {
+  .hero3d {
+    height: auto;
+  }
+
+  .hero3d__pin {
+    position: static;
+    height: auto;
+    overflow: visible;
+  }
+
+  .hero3d__canvas,
+  .hero3d__hint,
+  .hero3d__beat[data-b="1"] {
+    display: none;
+  }
+
+  .hero3d__stage {
+    padding-block: 4rem 2rem;
+  }
+
+  .hero3d__beat[data-b="0"] {
+    visibility: visible;
+    opacity: 1;
+    transform: none;
+  }
+
+  .hero3d__fallback {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  /* No scroll to scrub, so nothing to reveal it: the arrivals become a
+     plain block under the hero, which is where a reader who never sees
+     the scene would expect to find them. */
+  .hero3d__recent {
+    position: static;
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: none;
+    overflow: visible;
+    padding-block: 0 5rem;
+  }
+}
+
+.hero3d[data-static="true"] {
+  height: auto;
+}
+
+.hero3d[data-static="true"] .hero3d__pin {
+  position: static;
+  height: auto;
+  overflow: visible;
+}
+
+.hero3d[data-static="true"] .hero3d__canvas,
+.hero3d[data-static="true"] .hero3d__hint,
+.hero3d[data-static="true"] .hero3d__beat[data-b="1"] {
+  display: none;
+}
+
+.hero3d[data-static="true"] .hero3d__beat[data-b="0"] {
+  visibility: visible;
+  opacity: 1;
+  transform: none;
+}
+
+.hero3d[data-static="true"] .hero3d__stage {
+  padding-block: 4rem 2rem;
+}
+
+/* WebGL never arrived. Same treatment as reduced motion: the arrivals
+   flow as an ordinary block rather than waiting for a beat that will
+   never be scrubbed to. */
+.hero3d[data-static="true"] .hero3d__recent {
+  position: static;
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: none;
+  overflow: visible;
+  padding-block: 0 5rem;
+}
+
+/* Coarse pointers (touch) get no hover-tilt: it can only misfire. */
+@media (pointer: coarse) {
+  .book3d__inner {
+    --ry: -12deg;
+  }
+}
+
+/* Focus ring: single definition, used everywhere. */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Thin scrollbars that match the warm palette. */
+@supports (scrollbar-width: thin) {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--line) transparent;
+  }
+}
+
+@media (max-width: 767px) {
+  .hero3d__canvas {
+    transition: opacity 300ms ease;
+  }
+}
+
+/* --- While the scene is still coming --------------------------------
+   The static pile is the hero for a reader who will never get the scene:
+   reduced motion, or no WebGL. It is not a placeholder for one that is
+   merely late. Shown during the wait it has to be laid out at hero scale
+   with no canvas over it yet, which is how it ends up covering the
+   headline, and then it is swapped out a moment later anyway.
+
+   So it is held back until we know which hero this reader is getting.
+   `:not([data-static])` keeps it for the no-WebGL case and the media
+   query keeps it for reduced motion, both of which resolve immediately;
+   only the genuinely-loading state is blank, and `hero-3d.tsx` gives that
+   state a deadline so it cannot last.
+   ------------------------------------------------------------------- */
+@media (prefers-reduced-motion: no-preference) {
+  .hero3d:not([data-live="true"]):not([data-static="true"]) .hero3d__fallback {
+    display: none;
+  }
+
+  /* Something in the volume's place, so the half is waiting rather than
+     broken. Deliberately slight: it is on screen for a moment. */
+  .hero3d:not([data-live="true"]):not([data-static="true"]) .hero3d__stage::after {
+    content: ". . .";
+    position: absolute;
+    bottom: 20%;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 2rem;
+    letter-spacing: 0.5rem;
+    color: var(--ink-mute);
+    animation: stack3d-float 2s ease-in-out infinite;
+    z-index: 10;
+  }
+}
+
+/* On a wide viewport the volume has its own column, so the wait marker
+   belongs in it rather than under the headline. */
+@media (min-width: 1024px) and (prefers-reduced-motion: no-preference) {
+  .hero3d:not([data-live="true"]):not([data-static="true"]) .hero3d__stage::after {
+    left: 72%;
+    bottom: 42%;
+  }
+}
+
+
+/* =================================================================
+   Retired with `hero-recent.tsx`, replaced by the pinned arrivals
+   section (`.arrivals`). The list itself was fine; what it could not
+   do was give a book any presence, which is the whole point of the
+   section it stood in.
+   ================================================================= */
+
+/* ---------------------------------------------------------------
+   Recently added: the arrivals list.
+
+   Its own block rather than utility classes on every row. The
+   translucent, blurred surface is a leftover from when this was drawn
+   over a WebGL hero and had to stay readable against whatever cover
+   happened to be behind it; it reads well enough on the plain section
+   it now sits in that it was not worth unpicking, but that is the
+   reason it is not simply a card.
+---------------------------------------------------------------- */
+.hero-recent {
+  width: 100%;
+  max-width: 46rem;
+  padding: 0;
+}
+
+@media (min-width: 640px) {
+  .hero-recent {
+    padding: 0;
+  }
+}
+
+.hero-recent__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
+}
+
+.hero-recent__list {
+  display: flex;
+  flex-direction: column;
+}
+
+.hero-recent__row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0.5rem;
+  border-radius: 0.85rem;
+  cursor: pointer;
+  transition:
+    background-color 220ms ease,
+    transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 220ms ease;
+}
+
+.hero-recent__row + .hero-recent__row {
+  border-top: 1px solid color-mix(in srgb, var(--line) 45%, transparent);
+}
+
+.hero-recent__row:hover {
+  background: color-mix(in srgb, var(--accent) 8%, var(--surface));
+  transform: translateX(4px);
+  box-shadow:
+    -3px 0 0 0 var(--accent),
+    0 2px 12px color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+/* Spine glows in its own colour on hover */
+.hero-recent__row:hover .hero-recent__spine {
+  box-shadow: 0 0 8px 2px var(--spine-glow, rgba(100,80,60,0.45));
+  transition: box-shadow 220ms ease;
+}
+
+/* Row number shifts to accent on hover */
+.hero-recent__row:hover .hero-recent__n {
+  color: var(--accent);
+  transition: color 220ms ease;
+}
+
+/* Title shifts to accent on hover */
+.hero-recent__row:hover .hero-recent__title {
+  color: var(--accent);
+  transition: color 220ms ease;
+}
+
+.hero-recent__n {
+  flex: none;
+  width: 1.5rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--ink-faint);
+}
+
+/* The spine, edge-on: the same object the scene has just finished
+   shelving, at the size a list row can afford. */
+.hero-recent__spine {
+  flex: none;
+  width: 0.375rem;
+  height: 2.25rem;
+  border-radius: 0.125rem;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.28);
+}
+
+.hero-recent__actions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.hero-recent__details {
+  display: none;
+  align-items: center;
+  gap: 0.3rem;
+  border-radius: 999px;
+  padding: 0.3rem 0.65rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--accent);
+  background: var(--accent-soft);
+  opacity: 0;
+  transition:
+    opacity 180ms ease,
+    transform 180ms ease;
+  transform: translateX(-4px);
+  pointer-events: none;
+}
+
+/* Below `sm` the row has no width for a second control; the title is
+   already the link to the record, so the file is what stays. */
+@media (min-width: 640px) {
+  .hero-recent__details {
+    display: inline-flex;
+  }
+}
+
+/* Reveal the details badge when the row is hovered */
+.hero-recent__row:hover .hero-recent__details {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.hero-recent__download {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid color-mix(in srgb, var(--line) 85%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface) 70%, transparent);
+  color: var(--ink-mute);
+  transition: all 160ms ease;
+}
+
+.hero-recent__download:hover {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-ink);
+}
