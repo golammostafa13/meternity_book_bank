@@ -36,16 +36,21 @@ import { preferredLocale } from "@/lib/i18n/negotiate";
  */
 
 /**
- * The two pages that stay reachable without the password.
+ * The pages that stay reachable without the password.
  *
  * `signin` has to be open or nobody could ever get in. `signup` is open
  * because it is the register rather than a gate: someone holding a copy
  * should be able to say where they are without first proving they have read
  * the page the password is printed on.
  *
+ * `qr` is the proof sheet for the code printed in that copy, and it is open
+ * here for a reason that costs nothing: the page itself answers 404 outside
+ * development, so this entry only ever spares whoever is preparing the artwork
+ * a sign-in on their own machine. Nothing is exposed on the live site.
+ *
  * Everything else in the site is behind the password, catalogue included.
  */
-const OPEN_ROUTES = new Set(["signin", "signup"]);
+const OPEN_ROUTES = new Set(["signin", "signup", "qr"]);
 
 export async function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
