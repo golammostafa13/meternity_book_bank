@@ -334,5 +334,23 @@ export async function registerAction(
     return reject(undefined, dict.auth.errorUnavailable);
   }
 
-  redirect(localePath(lang, "/signin?registered=1"));
+  /**
+   * Straight to the door, with the address carried across.
+   *
+   * The register grants nothing, so being on it is not being in: the reader
+   * still has to type the word printed in their copy, and this is where they
+   * do it. Sending them anywhere else would leave someone who has just filled
+   * in five fields looking at a page that is not the one thing left to do.
+   *
+   * The address goes in the query so the door can fill that field in for them.
+   * It is the address they typed one second ago on the previous screen, it
+   * opens nothing on its own, and it is already in a row in the register —
+   * putting it in a URL gives away nothing that was not just given. What it
+   * buys is a reader on a phone typing one thing at the door instead of two.
+   * Nothing is carried when the field was left blank, which it may well be:
+   * the email is optional on the register.
+   */
+  const door = new URLSearchParams({ registered: "1" });
+  if (email) door.set("email", normaliseEmail(email));
+  redirect(`${localePath(lang, "/signin")}?${door}`);
 }

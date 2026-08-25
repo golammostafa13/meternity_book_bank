@@ -38,7 +38,19 @@ const empty: DoorState = { ok: false };
  * is the only thing between them and the library. Being able to see what you
  * typed is the difference between one attempt and three.
  */
-export function DoorForm({ lang, next = "" }: { lang: Locale; next?: string }) {
+export function DoorForm({
+  lang,
+  next = "",
+  email = "",
+}: {
+  lang: Locale;
+  next?: string;
+  /**
+   * An address to start with, from `/signup`. Empty for anyone who arrived at
+   * the door by any other route, which is most people.
+   */
+  email?: string;
+}) {
   const dict = getDictionary(lang);
   const [state, formAction, pending] = useActionState(enterAction, empty);
   const [shown, setShown] = useState(false);
@@ -75,8 +87,12 @@ export function DoorForm({ lang, next = "" }: { lang: Locale; next?: string }) {
             autoCorrect="off"
             spellCheck={false}
             required
-            autoFocus
-            defaultValue={state.email ?? ""}
+            // The cursor belongs on the field that is empty. Someone who has
+            // just registered arrives with this one filled in and one thing
+            // left to type, and starting them here would mean a tap to get out
+            // of it.
+            autoFocus={!email}
+            defaultValue={state.email ?? email}
             placeholder={dict.auth.emailPlaceholder}
             className={fieldClass(undefined, "pl-11")}
           />
@@ -100,6 +116,7 @@ export function DoorForm({ lang, next = "" }: { lang: Locale; next?: string }) {
             id="password"
             name="password"
             type={shown ? "text" : "password"}
+            autoFocus={Boolean(email)}
             // Not `current-password`: there is no account, so there is nothing
             // for a password manager to have saved and offering to save it
             // teaches the browser a credential that belongs to a print run.
