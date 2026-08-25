@@ -1,5 +1,6 @@
 import {
   authSecret,
+  isAdminEmail,
   sessionCookieName,
   sessionTtlSeconds,
   type Role,
@@ -8,47 +9,58 @@ import {
 /**
  * Session cookie: a JSON payload with an HMAC-SHA256 tag appended.
  *
- * Stateless on purpose. Nobody has an account here (there is one password for
- * readers and one for the administrator), so a session store would be a table
- * of rows that say nothing a signed cookie cannot. And a stateless token can be
- * checked inside `proxy.ts` without a round trip, which is what keeps the guard
- * on /admin free.
+ * Stateless on purpose. Nobody has an account here — there is one password for
+ * readers and one for the administrator, and the address typed alongside is a
+ * label rather than a credential — so a session store would be a table of rows
+ * that say nothing a signed cookie cannot. And a stateless token can be checked
+ * inside `proxy.ts` without a round trip, which is what keeps the guard on
+ * /admin free.
  *
  * Everything here uses Web Crypto only (no `node:crypto`), because the same
  * verification runs in the proxy runtime as in Server Actions.
  */
 
 export interface Session {
-  /** Which password was typed at the door. */
+  /**
+   * Which of the two printed words was typed at the door.
+   *
+   * A fact about the past, which is what makes it safe to carry here: it says
+   * what was proved, not what is currently permitted. On its own it grants
+   * nothing — see `canAdminister`.
+   */
   role: Role;
-  /** Display name. A constant per role: see `lib/auth/username`. */
+  /** The address typed at the door, normalised. Decides admin, with `role`. */
+  email: string;
+  /** Display name: the address's local part, or the admin handle. */
   name: string;
   /** Seconds since the epoch. */
   exp: number;
 }
 
 /**
- * The role *is* in the token, and that is a reversal worth explaining.
+ * Whether a session may administer the library.
  *
- * The usual rule (the one this codebase's ancestor followed) is to keep roles
- * out of a session and recompute them on every request, so that revoking an
- * administrator takes effect now rather than whenever an eight-hour cookie
- * happens to expire. That rule assumes there is something to recompute
- * *against*: an identity in the token and a list of privileged identities in
- * the environment.
+ * Both halves of the door are re-tested here, and only one of them is in the
+ * token:
  *
- * Here there is neither. The door is a password, not an identity, so the only
- * fact the server can ever know about a session is which password produced it.
- * Recomputing would mean re-deriving that fact from itself.
+ *   • `role === "admin"` — the admin password was typed. A fact about the past;
+ *     the server cannot re-derive it, so it is carried.
+ *   • `isAdminEmail(session.email)` — the address is on the list *now*. Read
+ *     from the environment on every call, never stamped into the cookie.
  *
- * The property normally lost is not lost either: rotating `ADMIN_PASSWORD` does
- * not expire outstanding admin cookies, but rotating `AUTH_SECRET` invalidates
- * every session in one move, which is the actual revocation lever, and it is
- * the lever you want anyway, because a leaked printed password is a leak of the
- * reader door, not of one account.
+ * That second check is the whole reason the address is collected. Removing an
+ * address from `ADMIN_EMAILS` takes effect on the next request rather than
+ * whenever an eight-hour cookie happens to expire, which is exactly the
+ * property a role baked into a token gives up. A claim stamped into a session
+ * outlives the decision that granted it; this one does not.
+ *
+ * `AUTH_SECRET` remains the blunt lever — rotating it invalidates every session
+ * at once — but it is no longer the *only* one, which it was back when the door
+ * knew nothing about who had opened it.
  */
 export function canAdminister(session: Session | null | undefined): boolean {
-  return session?.role === "admin";
+  if (!session || session.role !== "admin") return false;
+  return isAdminEmail(session.email);
 }
 
 /**
@@ -156,6 +168,7 @@ export async function readSessionToken(
     // An unrecognised role is not a reader by default. A payload this cheap to
     // validate should be validated: the only two values that exist are listed.
     if (session.role !== "reader" && session.role !== "admin") return null;
+    if (typeof session.email !== "string") return null;
     if (typeof session.name !== "string") return null;
     if (typeof session.exp !== "number") return null;
     if (session.exp * 1000 < Date.now()) return null;

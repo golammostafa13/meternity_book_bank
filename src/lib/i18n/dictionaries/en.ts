@@ -393,8 +393,8 @@ export const en = {
   },
   auth: {
     /* --- The door ------------------------------------------------------- */
-    title: "The password, please",
-    lead: "It is printed inside your copy: one word, the same for every reader.",
+    title: "Sign in",
+    doorEmailNote: "So we know the books are being read. It opens nothing on its own.",
     passwordLabel: "Password",
     passwordPlaceholder: "The word printed in your book",
     enter: "Open the library",
@@ -407,6 +407,7 @@ export const en = {
        was close, how long the right one is, or which of the two was being
        compared. */
     errorWrongPassword: "That is not the password. Check the page in your book.",
+    errorEmailEmpty: "Enter your email address.",
     errorTooMany:
       "Too many tries. Wait {minutes} minutes, then try again. The limit is {attempts} attempts per ten minutes.",
     errorUnavailable: "Not available just now. Please try again shortly.",
@@ -461,6 +462,38 @@ export const en = {
     books: "Books",
     authors: "Authors",
     categories: "Categories",
+    readers: "Readers",
+    breadcrumbReaders: "Library · {n} on the register",
+    readersNoStore:
+      "No Redis credentials are configured, so both tables below are being read from a file on this machine. On a serverless host that file is per-instance and does not survive a deploy: set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN before relying on anything here.",
+    statRegistered: "On the register",
+    statRegisteredHint: "Filled in the form at /signup",
+    statAddresses: "Addresses at the door",
+    statAddressesHint: "{n} visits in total",
+    statStore: "Store",
+    storeRedis: "Redis",
+    storeRedisHint: "Upstash. Durable across deploys.",
+    storeFile: "Local file",
+    storeFileHint: "private/*.json. Development only.",
+    registerTitle: "The register",
+    registerLead:
+      "Readers who filled in the form at /signup to say where their copy landed. Voluntary, so this is a sample rather than a census.",
+    registerEmpty: "Nobody has filled in the register yet.",
+    doorTitle: "At the door",
+    doorLead:
+      "Every address that has typed the printed password. Recorded without anyone being asked, so it is close to complete — but it is an address and a count, and it cannot say where a book landed.",
+    doorEmpty: "Nobody has opened the library yet.",
+    colName: "Name",
+    colPhone: "Mobile",
+    colEmail: "Email",
+    colWhere: "District",
+    colRegistered: "Registered",
+    colOpenedWith: "Opened with",
+    colVisits: "Visits",
+    colFirstSeen: "First seen",
+    colLastSeen: "Last seen",
+    roleAdmin: "Admin password",
+    roleReader: "Reader password",
     settings: "Settings",
     notifications: "Notifications",
     publicCatalogue: "Public catalogue",

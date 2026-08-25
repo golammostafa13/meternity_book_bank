@@ -10,6 +10,7 @@ import {
   Library,
   Search,
   Settings,
+  UserRound,
   Users,
 } from "lucide-react";
 import { Brand } from "@/components/brand";
@@ -53,6 +54,7 @@ const nav = [
   { href: "/admin/books", key: "books", Icon: BookMarked },
   { href: "/admin/authors", key: "authors", Icon: Users },
   { href: "/admin/categories", key: "categories", Icon: FolderOpen },
+  { href: "/admin/readers", key: "readers", Icon: UserRound },
 ] as const;
 
 /**

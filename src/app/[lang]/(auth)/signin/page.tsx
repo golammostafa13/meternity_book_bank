@@ -57,7 +57,6 @@ export default async function SignInPage(props: PageProps<"/[lang]/signin">) {
         <AuthCard
           lang={lang}
           title={dict.auth.title}
-          lead={dict.auth.lead}
           footer={
             <Link
               href={localePath(lang, "/signup")}

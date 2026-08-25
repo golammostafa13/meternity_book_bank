@@ -1,23 +1,22 @@
-# Pediatric Book Bank: a digital library for the Cef 3 collection
+# Maternity Book Bank: a digital library for mothers, midwives and health workers
 
-A bilingual (বাংলা / English) book catalogue, opened by the two codes printed
-in a hard copy, plus a private admin for the one librarian who maintains it.
+A bilingual (বাংলা / English) library on pregnancy, birth and newborn care,
+opened by the password printed inside the sponsored copy, plus a private admin
+for the librarian who maintains it. Sponsored by Radiant Pharmaceuticals
+(Exium MUPS 20).
 
-Built to the design in [`docs/choosen.webp`](docs/choosen.webp) and the
-architecture in [`docs/Library_Platform_Brief.pdf`](docs/Library_Platform_Brief.pdf):
-warm stone ground, near-black ink, a single hot orange, and books rendered as
+Warm rose ground, near-black ink, a single hot pink, and books rendered as
 physical objects rather than as cards with pictures on them.
 
 ```bash
 npm install
-cp .env.example .env.local   # then fill it in; see "Sign-in" below
+cp .env.example .env.local   # then fill it in; see "Getting in" below
 npm run dev                  # http://localhost:3000 → /en/signin or /bn/signin
 ```
 
 The bare domain opens the door rather than the library: `/` lands on sign-in,
-and there is no way past it. Nothing on this site opens without an account,
-not a book page, not the reader, not a file. See **Getting in** below for the
-two ways to get one.
+and there is no way past it. Nothing on this site opens without a session,
+not a book page, not the reader, not a file.
 
 ## Languages
 
@@ -41,91 +40,126 @@ the other language, so it works without JavaScript and can be shared.
   [`fill()`](src/lib/i18n/format.ts).
 - **Catalogue content** picks its language in [`src/lib/i18n/content.ts`](src/lib/i18n/content.ts).
   The two sides are not symmetrical: every book has an English title, only
-  Bengali books have a Bengali one, so a Bengali page naming a book *Cosmos* is
-  correct rather than a gap.
+  Bengali books have a Bengali one, so a Bengali page naming a book
+  *The Pregnancy Book* is correct rather than a gap.
 - **Adding a third language** means: add it to `locales`, add a dictionary file,
   and fill in the Bengali-equivalent fields on the data. No page changes.
 
 ## Getting in
 
-Three separate questions, deliberately:
+The door asks for two things: an **email address** and a **password**. They
+answer two different questions, and keeping them apart is the whole model.
 
-**Signing in** is open. Anyone with a Google account can, in one step: Google
-returns an ID token, it is verified server-side against Google's published keys
-([`src/lib/auth/google.ts`](src/lib/auth/google.ts)), and the verified address
-becomes the session. No allowlist, no second factor, nothing to be approved for.
-This is the librarians' door; readers come in through the printed codes.
+**Reading** is the password, and it is printed inside the sponsored copy, so
+every reader types the same word (`SITE_PASSWORD`). There are no accounts to
+sign up for and nothing to be approved for. The address beside it grants an
+ordinary reader nothing at all and is checked against nothing: it is required,
+shape-tested, and written down, so the sponsor can see the print run is being
+read.
 
-**Registering** is for whoever is holding a hard copy. Two QR codes are printed
-in the book. The first goes to `/signup`, which asks for a name, an address and
-`SIGNUP_CODE`, and issues a session that can see exactly one page: the one
-asking for the second code. The second QR goes to `/api/unlock?k=<UNLOCK_CODE>`,
-which finishes the account and lands the reader in the library. One scan,
-nothing typed; [`/[lang]/unlock`](src/app/[lang]/(auth)/unlock/page.tsx) has a
-form for when the camera will not focus.
-
-Stopping halfway is the point of two codes rather than one: otherwise the
-first would be the whole gate and the second would be ceremony. A route handler
-does the scan ([`src/app/api/unlock/route.ts`](src/app/api/unlock/route.ts))
-because a Server Component cannot set a cookie.
-
-Nothing is stored. There is no users table: the name and address go straight
-into the signed cookie, which *is* the account. A reader on a new device
-registers again: the codes are in their book.
-
-Be clear-eyed about what those codes are. They are printed, in circulation, and
+Be clear-eyed about what that password is. It is printed, in circulation, and
 identical in every copy of the run, so anyone who photographs the page can pass
 on what they saw. That is inherent to a static print run, and it is why nothing
-that matters hangs on them: a QR account can never administer the library
-([`canAdminister`](src/lib/auth/session.ts)) no matter whose address it was
-registered with, and `/signup` refuses an address in `ADMIN_EMAILS` outright.
+that matters hangs on it: the reader password can never administer the library
+no matter who types it, and there is nothing behind it but books that are free
+to read anyway.
 
-**Administering** is a short list of addresses. `ADMIN_EMAILS` (one or more,
-comma-separated) is compared against the signed-in address every time it
-matters ([`isAdminEmail`](src/lib/auth/config.ts)): that is the whole
-authorisation model. No users table, no roles to assign, no invitations to
-revoke; editing the variable moves the admin, and it takes effect on the next
-request rather than when an eight-hour cookie expires. That is also why there is no `role` in
-the token: a claim stamped into a session outlives the decision that granted it.
+**Administering** needs *both* halves, and neither is sufficient alone:
 
-The admin account shows as `pediatric-book-bank` wherever it appears: a constant in
-[`src/lib/auth/username.ts`](src/lib/auth/username.ts), not a setting. Everyone
-else shows the name they signed in with.
+- the address must be listed in `ADMIN_EMAILS` (one or more, comma-separated), and
+- `ADMIN_PASSWORD` must be typed, not the reader one.
 
-Set up in [`.env.example`](.env.example): a Google **Web application** client id
-(no secret and no redirect URI needed, this uses Google Identity Services),
-`ADMIN_EMAILS`, and an `AUTH_SECRET` for signing the session cookie.
+An address on the list that types the *reader* password is an ordinary reader
+for that session. An address that is **not** on the list and types the admin
+password is turned away outright rather than downgraded to a reader — see the
+note on [`doorRole`](src/lib/auth/config.ts). That is deliberate: the admin
+password is the reader password plus one character, so "downgrade to reader"
+would quietly turn that extra character into no protection at all.
 
-Without a client id, and only outside production, `/[lang]/signin` accepts an
-address directly so a fresh clone can sign in. What it cannot do is *prove* the
-address belongs to whoever typed it, which is why the branch is compiled out of
-a production build.
+The rejection message is the same sentence for every kind of wrong, including
+an unlisted address typing the right admin password, so the form cannot be used
+to discover who the administrators are.
 
-The guard is layered: [`src/proxy.ts`](src/proxy.ts) turns away anonymous
-requests for anything but the three door pages, holds half-finished
-registrations at the second code, and keeps everyone who is not the
-administrator off admin screens. Every Server Action calls `requireAdmin()`
-itself, because a POST never passes through a page. A signed-in reader who asks
-for `/admin` is sent to the catalogue rather than to a sign-in form they have
-already used.
+Whether a session may administer is recomputed on every request from the live
+`ADMIN_EMAILS` rather than stamped into the cookie
+([`canAdminister`](src/lib/auth/session.ts)), so removing an address takes
+effect on the next request rather than when an eight-hour cookie expires. Only
+the fact that the admin *password* was typed is carried in the token, because
+the server cannot re-derive that.
+
+The door is rate-limited — ten attempts per address per ten minutes,
+successes included ([`src/lib/auth/rate-limit.ts`](src/lib/auth/rate-limit.ts)).
+One shared password with no throttle is a password an attacker can simply try
+their way into.
+
+The admin account shows as `maternity-book-bank` wherever it appears: a
+constant in [`src/lib/auth/username.ts`](src/lib/auth/username.ts), not a
+setting. A reader shows the local part of the address they typed.
+
+**Registering** (`/signup`) is a third, separate thing, and it is *not* how
+anyone gets in. It records who received a copy and where — District and Thana,
+picked from a list of all 64 districts — for the sponsor, and it grants
+nothing. Every field is optional except a name and the phone number that keys
+the record. A reader who registers still needs the password; a reader who never
+registers is not held back by it.
+
+The guard is layered: [`src/proxy.ts`](src/proxy.ts) turns away sessionless
+requests for anything but the two door pages and keeps everyone who is not the
+administrator off admin screens. Every admin Server Action calls
+`requireAdmin()` itself, because a POST never passes through a page.
+
+### Who has been in
+
+`/[lang]/admin/readers` shows two tables, and they are two different facts
+rather than two views of one:
+
+- **The register** — readers who chose to fill in `/signup`. Voluntary, so it
+  is a sample rather than a census. Keyed on phone number.
+- **At the door** — every address that has typed the printed password, written
+  without anyone being asked. Close to complete, but it is an address and a
+  count and it cannot say where a book landed.
+
+Both live in Upstash Redis in production and in `private/*.json` locally; see
+**Deploying** below for why the file is not an option on Vercel. Neither is a
+credential — nothing on that screen is consulted to decide who may come in.
 
 ### The book files
 
 They are not in `public/`. They were, and that made the gate on the pages
 decoration: the proxy's matcher has to skip anything with a file extension, so
-anyone with a URL could take a PDF without ever meeting the sign-in form.
+anyone with a URL could take a PDF without ever meeting the password.
 
 They live in `private/books/` now, and
 [`src/app/api/file/[slug]/route.ts`](src/app/api/file/[slug]/route.ts) is the
-only way to them. It checks the same signed cookie the proxy would have, serves
-`inline` for the reader and `attachment` for the download button, and supports
-range requests, without which opening the 36MB handbook would pull the whole
-file before drawing page one.
+only way to them. It checks the same signed cookie the proxy would have —
+before a single byte is read — serves `inline` for the reader and `attachment`
+for the download button, and supports range requests, without which opening the
+15MB *Baby's Best Chance* would pull the whole file before drawing page one.
 
-Because that path is assembled from a slug at runtime, the build's file tracer
-cannot see it; `outputFileTracingIncludes` in
-[`next.config.ts`](next.config.ts) is what keeps the books in the deployed
-bundle.
+Two sources behind one interface:
+
+- **Locally**, with `BOOKS_RELEASE_BASE` unset, the file is read off disk from
+  `private/books/`. That directory is gitignored and absent from a deploy.
+- **In production**, `BOOKS_RELEASE_BASE` points at a GitHub Release holding
+  the same slug-named files, and the route **proxies** the bytes rather than
+  redirecting to them. That is not a preference: GitHub redirects to
+  `release-assets.githubusercontent.com`, which sends no CORS headers, and
+  pdf.js reads through `fetch`, so a redirect is blocked by the browser while a
+  proxy is not. The download button would survive a redirect (`<a download>` is
+  a navigation, and CORS does not apply) but the reader would not.
+
+Publishing a new set of files is one command:
+
+```bash
+gh release create v1.0-books private/books/*.pdf \
+  --title "Book files v1.0" --notes "PDF assets served by /api/file/[slug]."
+```
+
+Note that a public repository's release assets are public URLs. The password
+gates the reader and the download button, not the underlying asset; every title
+in this collection is a freely redistributable WHO/HSE/BC-government
+publication, which is what makes that acceptable here. It would not be for a
+collection of copyrighted textbooks.
 
 ### Search engines
 
@@ -135,6 +169,49 @@ sitemap lists the sign-in page and nothing else, and `robots.txt` disallows the
 rest rather than spending crawl budget rediscovering the same redirect. That is
 the cost of gating the shelves, not an oversight.
 
+## Deploying
+
+Vercel, from this repository. Nothing in the deploy is stateful except Redis.
+
+**1. Publish the book files.** `private/` is gitignored, so the PDFs never
+reach the deployment; they are served from a GitHub Release. See
+**The book files** above for the `gh release create` command.
+
+**2. Set the environment.** In the Vercel project, Settings → Environment
+Variables, for Production *and* Preview:
+
+| Variable | Value |
+|---|---|
+| `SITE_PASSWORD` | the word printed in the sponsored copy |
+| `ADMIN_PASSWORD` | the reader password plus one character; printed nowhere |
+| `ADMIN_EMAILS` | the administrators, comma-separated |
+| `AUTH_SECRET` | `openssl rand -base64 48` — **not** the development value |
+| `BOOKS_RELEASE_BASE` | `https://github.com/<owner>/<repo>/releases/download/v1.0-books` |
+| `UPSTASH_REDIS_REST_URL` | from the Upstash console |
+| `UPSTASH_REDIS_REST_TOKEN` | from the Upstash console |
+
+`KV_REST_API_URL` / `KV_REST_API_TOKEN` are read as equivalents, so Vercel's
+own Upstash integration works without renaming anything.
+
+**Redis is not optional in production.** Three things use it, and on a
+serverless host all three degrade badly without it, because the filesystem is
+per-instance and wiped by every deploy:
+
+- the register (`/signup`) falls back to `private/readers.json`;
+- the door record falls back to `private/accounts.json`;
+- the rate limit falls back to a `Map` inside one lambda, so ten attempts per
+  address becomes ten attempts *per instance*.
+
+The admin Readers screen says which store it is actually reading, so a
+misconfigured deploy is visible rather than silently forgetting rows.
+
+**3. Deploy.** `vercel --prod`, or connect the repository and push. The build
+runs `next build`, which typechecks.
+
+Rotating `AUTH_SECRET` signs everyone out at once, which is the blunt
+revocation lever. Removing an address from `ADMIN_EMAILS` revokes that
+administrator on the next request without touching anyone else.
+
 ## How it is put together
 
 | | |
@@ -143,11 +220,11 @@ the cost of gating the shelves, not an oversight.
 | [`src/lib/actions/`](src/lib/actions/) | Server Actions: the only writes. Zod-validated, session-checked, narrowly revalidated. |
 | [`src/components/book-3d.tsx`](src/components/book-3d.tsx) | a book as five faces of a bound volume: board, spine, fore-edge, head, tail. Pure CSS transforms, no WebGL, no library. |
 | [`src/components/shelf-3d.tsx`](src/components/shelf-3d.tsx) | a collection as a row of spines on a plank: spine width tracks page count. |
-| [`src/components/book-stack-3d.tsx`](src/components/book-stack-3d.tsx) | the hero: a pile of volumes on a table, seen from above. |
+| [`src/components/hero-cinematic.tsx`](src/components/hero-cinematic.tsx) | the hero: a slow pan across four chapter plates, with the collection surfacing over it. |
 | [`src/lib/cover-theme.ts`](src/lib/cover-theme.ts) | eight hand-mixed cover schemes. Covers are drawn, never uploaded, and can never land outside the palette. |
 | [`src/app/globals.css`](src/app/globals.css) | design tokens, the 3D geometry, and one kill-switch that disables every transform under `prefers-reduced-motion`. |
 
-Almost every page is prerendered: 229 static documents across both languages,
+Almost every page is prerendered across both languages,
 which is what lets the whole catalogue be served from cache. The exceptions are
 the filtered catalogue, the search page and everything under `/admin`, which are
 dynamic by design.

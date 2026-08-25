@@ -2,10 +2,13 @@
 
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { recordEntry } from "@/lib/auth/accounts";
 import {
+  doorRole,
+  isEmailShaped,
   isRegistrationOpen,
+  normaliseEmail,
   normalisePhone,
-  passwordRole,
   sessionCookieName,
   sessionCookieOptions,
 } from "@/lib/auth/config";
@@ -16,7 +19,7 @@ import {
 } from "@/lib/auth/rate-limit";
 import { saveReader } from "@/lib/auth/readers";
 import { signSession } from "@/lib/auth/session";
-import { adminUsername, readerUsername } from "@/lib/auth/username";
+import { adminUsername, displayName } from "@/lib/auth/username";
 import { districtById, thanaById } from "@/lib/data/bd-geo";
 import { getDictionaryFor, localePath } from "@/lib/i18n";
 import { defaultLocale, hasLocale } from "@/lib/i18n/config";
@@ -27,10 +30,13 @@ import { fill } from "@/lib/i18n/format";
  *
  * Two actions, and they are not two halves of one flow:
  *
- * **`enterAction`** is the door. One field. The word printed in the sponsored
- * copy opens the library; a different word, known to the sponsor and printed
- * nowhere, opens the admin screens as well. There is nothing else to prove and
- * nobody to be recognised as.
+ * **`enterAction`** is the door. Two fields, answering two different questions.
+ * The word printed in the sponsored copy opens the library, and every reader
+ * types the same one; the address alongside it grants a reader nothing at all
+ * and is collected because it is the only durable handle this site has on who
+ * is reading. For an administrator the two are read together: a different word,
+ * printed nowhere, opens the admin screens *only* for an address listed in
+ * `ADMIN_EMAILS`.
  *
  * **`registerAction`** is the register. It writes a row so the sponsor knows who
  * received a copy and where (which is what the District and Thana fields are
@@ -44,6 +50,15 @@ import { fill } from "@/lib/i18n/format";
 export interface DoorState {
   ok: boolean;
   message?: string;
+  /**
+   * The address that was typed, echoed back.
+   *
+   * The password never is, and that asymmetry is the point: a rejected reader
+   * should not have to retype an address they got right in order to correct a
+   * word they got wrong, and a password put back into the DOM is a password
+   * sitting in the page for whatever reads it next.
+   */
+  email?: string;
   /** Bumped every time, so a second identical rejection still remounts. */
   attempt?: number;
 }
@@ -98,15 +113,24 @@ async function setSessionCookie(token: string): Promise<void> {
 /**
  * The door.
  *
- * The rate limit is counted before the password is even looked at, and it
- * counts successes as well as failures: a limiter that only counts failures
- * lets someone who already has the reader password hammer the admin one for
- * free. See `lib/auth/rate-limit`.
+ * The rate limit is counted before either field is looked at, and it counts
+ * successes as well as failures: a limiter that only counts failures lets
+ * someone who already has the reader password hammer the admin one for free.
+ * See `lib/auth/rate-limit`.
  *
- * The rejection message does not say whether the word was close, how long the
- * right one is, or which of the two was being compared. There is one message
- * for "that is not the password", and it is the same message whether the field
- * was empty, wrong, or the admin password mistyped.
+ * The address is checked first, and only for shape. That order matters for the
+ * reason a form's order usually does — "that is not an email address" is a
+ * message someone can act on, and burying it under a password rejection means
+ * retyping the word before discovering the real problem — but it also means the
+ * cheap test runs before the one worth protecting.
+ *
+ * The password rejection says nothing else. Not whether the word was close, not
+ * how long the right one is, not which of the two was being compared, and — the
+ * one that would matter most — not whether the failure was the word or the
+ * address. `doorRole` returns the same `null` for an unlisted address typing the
+ * admin password as for a listed one typing nonsense, and this returns the same
+ * sentence for both, so the form cannot be used to discover who the
+ * administrators are.
  */
 export async function enterAction(
   prev: DoorState,
@@ -128,15 +152,37 @@ export async function enterAction(
     };
   }
 
-  const role = passwordRole(String(formData.get("password") ?? ""));
+  const email = normaliseEmail(String(formData.get("email") ?? ""));
+  if (!email) {
+    return { ok: false, attempt, email, message: dict.auth.errorEmailEmpty };
+  }
+  if (!isEmailShaped(email)) {
+    return { ok: false, attempt, email, message: dict.auth.errorEmailInvalid };
+  }
+
+  const role = doorRole(email, String(formData.get("password") ?? ""));
   if (!role) {
-    return { ok: false, attempt, message: dict.auth.errorWrongPassword };
+    return { ok: false, attempt, email, message: dict.auth.errorWrongPassword };
+  }
+
+  // Written down, never depended on. A reader holding the right printed word is
+  // entitled to the library whether or not the store is reachable, and there is
+  // nothing here that granting access would consult — so a failure is swallowed
+  // rather than turned into a locked door. See `lib/auth/accounts`.
+  try {
+    await recordEntry(email, role);
+  } catch {
+    // Intentionally empty: the history is worth having, not worth a 500.
   }
 
   await setSessionCookie(
     await signSession({
       role,
-      name: role === "admin" ? adminUsername : readerUsername,
+      email,
+      // The administrator shows as the library rather than as a person: the
+      // admin screens are the library's own, and whoever is at the desk today
+      // is not what that header is naming.
+      name: role === "admin" ? adminUsername : displayName(email),
     }),
   );
 
@@ -235,17 +281,4 @@ export async function registerAction(
   }
 
   redirect(localePath(lang, "/signin?registered=1"));
-}
-
-/** Deliberately loose: one @, a dot in the domain, no spaces. */
-function isEmailShaped(email: string): boolean {
-  const parts = email.split("@");
-  return (
-    parts.length === 2 &&
-    parts[0].length > 0 &&
-    parts[1].includes(".") &&
-    !parts[1].startsWith(".") &&
-    !parts[1].endsWith(".") &&
-    !email.includes(" ")
-  );
 }

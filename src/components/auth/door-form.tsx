@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { AlertCircle, Eye, EyeOff, KeyRound } from "lucide-react";
+import { AlertCircle, Eye, EyeOff, KeyRound, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { fieldClass } from "@/components/ui/field";
 import { enterAction, type DoorState } from "@/lib/actions/auth";
@@ -13,14 +13,25 @@ import { cn } from "@/lib/utils";
 const empty: DoorState = { ok: false };
 
 /**
- * The door. One field.
+ * The door. Two fields, and they are not equals.
  *
- * Two details are doing more work than they look.
+ * The password is the gate. The address beside it opens nothing on its own — it
+ * is how the library knows it is being read, and, for the handful of addresses
+ * in `ADMIN_EMAILS`, the second half of what the admin screens ask for. The
+ * note under the field says so, because a form that asks for an address without
+ * explaining why reads as a form that is about to email you.
  *
- * `key={attempt}` remounts the input on every rejection. The `attempt` counter
+ * Three details are doing more work than they look.
+ *
+ * `key={attempt}` remounts the inputs on every rejection. The `attempt` counter
  * exists only for that: without it, a second identical rejection changes nothing
  * in the DOM, so a screen reader announces nothing and a reader who mistyped the
  * same word twice gets no feedback at all.
+ *
+ * The address survives a rejection and the password does not. Retyping an
+ * address you got right, on a phone, to fix a word you got wrong, is the kind of
+ * small tax that turns one attempt into an abandoned visit — and a password
+ * echoed back into the DOM is a password sitting in the page.
  *
  * The reveal toggle is not a nicety here. The password is a word copied off a
  * printed page, often on a phone, often by someone who is tired, and this field
@@ -39,6 +50,42 @@ export function DoorForm({ lang, next = "" }: { lang: Locale; next?: string }) {
     <form action={formAction} className="space-y-4">
       <input type="hidden" name="lang" value={lang} />
       <input type="hidden" name="next" value={next} />
+
+      <div>
+        <label
+          htmlFor="email"
+          className={cn("mb-2 block text-sm font-medium text-ink", bn)}
+        >
+          {dict.auth.emailLabel}
+        </label>
+        <div className="relative">
+          <Mail
+            className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-ink-faint"
+            aria-hidden="true"
+          />
+          <input
+            key={`email-${attempt}`}
+            id="email"
+            name="email"
+            type="email"
+            // Unlike the password, this one *is* worth remembering: it is the
+            // same address every visit and there is nothing secret about it.
+            autoComplete="email"
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
+            required
+            autoFocus
+            defaultValue={state.email ?? ""}
+            placeholder={dict.auth.emailPlaceholder}
+            aria-describedby="email-note"
+            className={fieldClass(undefined, "pl-11")}
+          />
+        </div>
+        <p id="email-note" className={cn("mt-2 text-xs text-ink-faint", bn)}>
+          {dict.auth.doorEmailNote}
+        </p>
+      </div>
 
       <div>
         <label
@@ -64,7 +111,6 @@ export function DoorForm({ lang, next = "" }: { lang: Locale; next?: string }) {
             autoCapitalize="none"
             autoCorrect="off"
             spellCheck={false}
-            autoFocus
             placeholder={dict.auth.passwordPlaceholder}
             className={fieldClass(undefined, "pl-11 pr-12")}
           />

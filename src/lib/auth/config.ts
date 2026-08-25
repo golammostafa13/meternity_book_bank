@@ -1,13 +1,27 @@
 /**
  * Who may read the library, and who may administer it.
  *
- * Two questions, one door each, and both doors are a single word:
+ * The door asks for two things — an address and a word — and they answer two
+ * different questions:
  *
  *   • **Reading** needs `SITE_PASSWORD`. It is printed inside the sponsored
- *     copy, so every reader types the same word. There are no accounts to sign
- *     in to and nothing to be approved for. Nothing on these shelves opens
+ *     copy, so every reader types the same word. Nothing on these shelves opens
  *     without it: not a book page, not the reader, not a file.
- *   • **Administering** needs `ADMIN_PASSWORD`, which is printed nowhere.
+ *   • **Administering** needs `ADMIN_PASSWORD` *and* an address listed in
+ *     `ADMIN_EMAILS`. Neither is sufficient alone. The password is printed
+ *     nowhere; the list is configuration.
+ *
+ * The address is why this is not simply "one password, two roles". A shared
+ * word cannot say who typed it, so an administrator was previously
+ * indistinguishable from any other holder of the same word. Requiring the
+ * address as well means administration is granted to a person rather than to a
+ * string, and withdrawn by editing a variable rather than by rotating a
+ * password every reader also uses.
+ *
+ * For a reader the address grants nothing at all — the printed word is still
+ * the whole gate. It is collected because the sponsor is giving away a print
+ * run and would like to know it is being read, and because it is the one
+ * durable handle on a visitor that a shared password can never provide.
  *
  * Registering is a third, separate thing (`/signup`) and is *not* how anyone
  * gets in. It records who received a copy and where (see District/Thana) for
@@ -49,6 +63,27 @@ export const SITE_PASSWORD = process.env.SITE_PASSWORD ?? "Exium";
  */
 export const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? "Exiumm";
 
+/**
+ * The addresses that administer this library.
+ *
+ * One value, comma- or whitespace-separated, so a librarian with several
+ * accounts — or several librarians — need not share one inbox:
+ *
+ *   ADMIN_EMAILS=librarian@example.org,second-account@example.org
+ *
+ * `ADMIN_EMAIL` (singular) is still read when `ADMIN_EMAILS` is unset: it is
+ * the older name for the same setting, and one address is a perfectly good
+ * list.
+ *
+ * Empty means *nobody* administers the library. That is the important case to
+ * get right: an unset variable must not match a blank email and hand /admin to
+ * whoever gets there first, which is why `isAdminEmail` refuses everything
+ * rather than falling back to something permissive.
+ */
+export const adminEmails: readonly string[] = parseEmailList(
+  process.env.ADMIN_EMAILS ?? process.env.ADMIN_EMAIL ?? "",
+);
+
 /** Cookie signing secret. Any long random string; rotate to log everyone out. */
 export const authSecret = process.env.AUTH_SECRET ?? "";
 
@@ -70,6 +105,63 @@ export const sessionCookieOptions = {
   path: "/",
   maxAge: sessionTtlSeconds,
 } as const;
+
+/**
+ * Addresses are compared case-insensitively, and untrimmed input is a typo
+ * rather than a different person — so both sides of every comparison go
+ * through here.
+ */
+export function normaliseEmail(value: string): string {
+  return value.trim().toLowerCase();
+}
+
+/**
+ * Splits a configured list into normalised addresses.
+ *
+ * Commas, semicolons and any whitespace all separate, because a value pasted
+ * into a hosting dashboard picks up whichever the person happened to type. The
+ * `filter(Boolean)` is not tidiness: without it a trailing comma contributes an
+ * empty string to the list, and an empty string in `adminEmails` is an entry
+ * that matches an unset address.
+ */
+export function parseEmailList(value: string): string[] {
+  return value
+    .split(/[\s,;]+/)
+    .map(normaliseEmail)
+    .filter(Boolean);
+}
+
+/**
+ * Deliberately loose: one `@`, a dot in the domain, no spaces.
+ *
+ * This is a shape test, not a validity test. Nothing is ever sent to the
+ * address, so the only thing a stricter pattern could achieve is turning away
+ * a reader whose real address it did not anticipate.
+ */
+export function isEmailShaped(email: string): boolean {
+  const parts = email.split("@");
+  return (
+    parts.length === 2 &&
+    parts[0].length > 0 &&
+    parts[1].includes(".") &&
+    !parts[1].startsWith(".") &&
+    !parts[1].endsWith(".") &&
+    !email.includes(" ")
+  );
+}
+
+/**
+ * Whether an address is on the administrators' list.
+ *
+ * Checked against the address inside the signed session rather than anything
+ * the browser has just sent, and checked at the moment it matters rather than
+ * stamped into the cookie — see the note on `canAdminister` in
+ * `lib/auth/session`.
+ */
+export function isAdminEmail(email: string | undefined | null): boolean {
+  if (!email) return false;
+  return adminEmails.includes(normaliseEmail(email));
+}
 
 /** What a typed password entitles the typist to, or null for neither. */
 export type Role = "reader" | "admin";
@@ -93,6 +185,33 @@ export function passwordRole(typed: string): Role | null {
   if (ADMIN_PASSWORD && value === ADMIN_PASSWORD) return "admin";
   if (SITE_PASSWORD && value === SITE_PASSWORD) return "reader";
   return null;
+}
+
+/**
+ * The whole door, both fields.
+ *
+ * `passwordRole` above says which of the two printed words was typed;
+ * this says what the pair of (address, word) actually opens.
+ *
+ * The case worth reading twice is the admin password typed by an address that
+ * is not on the list. It returns `null` — turned away — rather than falling
+ * back to reader access. That is deliberate and it is not merely strict:
+ * `ADMIN_PASSWORD` is `SITE_PASSWORD` plus a character, so "downgrade an
+ * unlisted admin attempt to a reader" would mean anyone who guessed the reader
+ * word could append characters at random and still be let in, which quietly
+ * turns the admin password's extra character into no protection at all. One
+ * word opens one thing.
+ *
+ * The address is not checked for readers, and there is nothing to check it
+ * against: the reader door is a printed word by design, and an allowlist of
+ * readers would be a different site. It is required, shape-tested and recorded,
+ * and that is all.
+ */
+export function doorRole(email: string, typed: string): Role | null {
+  const word = passwordRole(typed);
+  if (!word) return null;
+  if (word === "admin") return isAdminEmail(email) ? "admin" : null;
+  return "reader";
 }
 
 /** Registration is always open. It is a record, not a gate. */

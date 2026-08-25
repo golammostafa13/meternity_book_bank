@@ -348,8 +348,9 @@ export const bn: Dictionary = {
   },
   auth: {
     /* --- The door ------------------------------------------------------- */
-    title: "পাসওয়ার্ড দিন",
-    lead: "আপনার বইয়ের ভেতরে ছাপা আছে: একটি শব্দ, সব পাঠকের জন্য একই।",
+    title: "সাইন ইন",
+    doorEmailNote:
+      "বইগুলো পড়া হচ্ছে কিনা জানার জন্য। এটি নিজে কিছু খোলে না।",
     passwordLabel: "পাসওয়ার্ড",
     passwordPlaceholder: "বইয়ে ছাপা শব্দটি",
     enter: "গ্রন্থাগার খুলুন",
@@ -359,6 +360,7 @@ export const bn: Dictionary = {
     hidePassword: "পাসওয়ার্ড লুকান",
 
     errorWrongPassword: "এটি সঠিক পাসওয়ার্ড নয়। বইয়ের পৃষ্ঠাটি দেখে নিন।",
+    errorEmailEmpty: "আপনার ইমেইল ঠিকানা লিখুন।",
     errorTooMany:
       "অনেকবার চেষ্টা হয়েছে। {minutes} মিনিট পরে আবার চেষ্টা করুন। প্রতি দশ মিনিটে {attempts} বার চেষ্টা করা যায়।",
     errorUnavailable: "এখন সম্ভব হচ্ছে না। কিছুক্ষণ পরে আবার চেষ্টা করুন।",
@@ -413,6 +415,38 @@ export const bn: Dictionary = {
     books: "বই",
     authors: "লেখক",
     categories: "বিভাগ",
+    readers: "পাঠক",
+    breadcrumbReaders: "গ্রন্থাগার · নিবন্ধনে {n} জন",
+    readersNoStore:
+      "Redis-এর তথ্য দেওয়া নেই, তাই নিচের দুটি তালিকাই এই যন্ত্রের একটি ফাইল থেকে পড়া হচ্ছে। সার্ভারলেস হোস্টে সেই ফাইল প্রতিটি ইনস্ট্যান্সে আলাদা এবং নতুন ডিপ্লয়ে মুছে যায়: এখানকার তথ্যের উপর নির্ভর করার আগে UPSTASH_REDIS_REST_URL ও UPSTASH_REDIS_REST_TOKEN বসিয়ে নিন।",
+    statRegistered: "নিবন্ধিত",
+    statRegisteredHint: "/signup ফর্মটি পূরণ করেছেন",
+    statAddresses: "দরজায় আসা ঠিকানা",
+    statAddressesHint: "মোট {n} বার",
+    statStore: "সংরক্ষণ",
+    storeRedis: "Redis",
+    storeRedisHint: "Upstash। ডিপ্লয়ের পরেও থাকে।",
+    storeFile: "স্থানীয় ফাইল",
+    storeFileHint: "private/*.json। কেবল ডেভেলপমেন্টে।",
+    registerTitle: "নিবন্ধন",
+    registerLead:
+      "যাঁরা /signup ফর্মে জানিয়েছেন তাঁদের কপি কোথায় পৌঁছেছে। এটি ঐচ্ছিক, তাই এটি একটি নমুনা — পূর্ণ তালিকা নয়।",
+    registerEmpty: "এখনো কেউ নিবন্ধন করেননি।",
+    doorTitle: "দরজায়",
+    doorLead:
+      "যত ঠিকানা ছাপা পাসওয়ার্ড দিয়ে ঢুকেছে। কাউকে জিজ্ঞেস না করেই লেখা হয়, তাই তালিকাটি প্রায় সম্পূর্ণ — তবে এতে শুধু ঠিকানা ও সংখ্যা আছে, বই কোথায় পৌঁছেছে তা নেই।",
+    doorEmpty: "এখনো কেউ গ্রন্থাগার খোলেননি।",
+    colName: "নাম",
+    colPhone: "মোবাইল",
+    colEmail: "ইমেইল",
+    colWhere: "জেলা",
+    colRegistered: "নিবন্ধনের তারিখ",
+    colOpenedWith: "যে পাসওয়ার্ডে",
+    colVisits: "কতবার",
+    colFirstSeen: "প্রথম",
+    colLastSeen: "সর্বশেষ",
+    roleAdmin: "অ্যাডমিন পাসওয়ার্ড",
+    roleReader: "পাঠক পাসওয়ার্ড",
     settings: "সেটিংস",
     notifications: "বিজ্ঞপ্তি",
     publicCatalogue: "প্রকাশ্য তালিকা",
