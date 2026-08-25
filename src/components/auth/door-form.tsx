@@ -78,13 +78,9 @@ export function DoorForm({ lang, next = "" }: { lang: Locale; next?: string }) {
             autoFocus
             defaultValue={state.email ?? ""}
             placeholder={dict.auth.emailPlaceholder}
-            aria-describedby="email-note"
             className={fieldClass(undefined, "pl-11")}
           />
         </div>
-        <p id="email-note" className={cn("mt-2 text-xs text-ink-faint", bn)}>
-          {dict.auth.doorEmailNote}
-        </p>
       </div>
 
       <div>

@@ -1,4 +1,3 @@
-import { BookOpen, KeyRound, Languages } from "lucide-react";
 import { CourtesyBy } from "@/components/courtesy-by";
 import { ExiumAd } from "@/components/exium-ad";
 import { getDictionary } from "@/lib/i18n";
@@ -13,7 +12,7 @@ import { cn } from "@/lib/utils";
  * This is the first surface anyone sees, because `/` lands on sign-in and there
  * is no way past it, so it has to do three jobs at once: say what the library
  * is, say who paid for it, and not get in the way of a single password field.
- * Hence the order: the promise, then three facts, then the sponsor.
+ * Hence the order: the promise, then the sponsor.
  *
  * The advert is *here* rather than only inside the library on purpose. A reader
  * who never gets past this page has still seen the pack, which is the deal; and
@@ -61,26 +60,6 @@ export function AuthAside({
       <p className={cn("mt-3 max-w-md text-[0.95rem] text-ink-mute", bn)}>
         {lead}
       </p>
-
-      {/* Three facts about the library, one line. They answer the question the
-          card provokes: "do I need this?", without another paragraph. */}
-      <ul
-        className={cn(
-          "mt-5 flex max-w-md flex-wrap items-center gap-x-5 gap-y-2 text-[0.82rem] font-medium text-ink-mute",
-          bn,
-        )}
-      >
-        {[
-          { key: "book", Icon: KeyRound, label: dict.auth.badgeWithBook },
-          { key: "bi", Icon: Languages, label: dict.auth.badgeBilingual },
-          { key: "browser", Icon: BookOpen, label: dict.auth.badgeBrowser },
-        ].map(({ key, Icon, label }) => (
-          <li key={key} className="inline-flex items-center gap-1.5">
-            <Icon className="size-4 text-accent" aria-hidden="true" />
-            {label}
-          </li>
-        ))}
-      </ul>
 
       <div className="mt-9 flex max-w-lg items-end gap-8">
         <ExiumAd

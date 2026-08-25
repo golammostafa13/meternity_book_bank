@@ -394,7 +394,6 @@ export const en = {
   auth: {
     /* --- The door ------------------------------------------------------- */
     title: "Sign in",
-    doorEmailNote: "So we know the books are being read. It opens nothing on its own.",
     passwordLabel: "Password",
     passwordPlaceholder: "The word printed in your book",
     enter: "Open the library",
@@ -452,9 +451,6 @@ export const en = {
       "Pregnancy, birth and the first weeks: every title in the collection, in Bangla and English, free in your browser.",
     sideLeadSignUp:
       "Tell us where your copy landed. It takes a moment and it is entirely optional.",
-    badgeWithBook: "Yours with the book",
-    badgeBilingual: "Bangla & English",
-    badgeBrowser: "Reads in the browser",
   },
 
   admin: {
