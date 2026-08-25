@@ -42,8 +42,27 @@ export { adminUsername } from "@/lib/auth/username";
  * pass on what they saw. This is a lock on a door, not a vault, and nothing
  * that matters hangs on it: it can never administer the library, and there is
  * nothing behind it but books that are free to read anyway.
+ *
+ * **A blank variable falls back to the default, and `??` would not have done
+ * that.** An empty string is not nullish, so `process.env.SITE_PASSWORD ?? …`
+ * leaves this `""` when the variable exists with no value — which the guard in
+ * `passwordRole` then treats as "no reader password configured" and skips.
+ * The result is a door that refuses every reader for every word typed while
+ * telling them to check the page in their book: no error, no log, and a
+ * variable someone added and left empty in a hosting dashboard is enough to
+ * cause it. Not a hypothetical; it is what a blank field in a Vercel form
+ * produces.
+ *
+ * Note the asymmetry with `ADMIN_PASSWORD` below, which does NOT fall back on
+ * blank. Falling back here restores a word already printed in every copy of the
+ * run, so it costs nothing; doing the same there would resurrect a *public
+ * default* as the administrator's password for anyone who blanked the field to
+ * turn admin off. Blank means "the printed default" for readers and "nobody"
+ * for administrators, and those are the safe directions for each.
  */
-export const SITE_PASSWORD = process.env.SITE_PASSWORD ?? "Exium";
+export const SITE_PASSWORD = process.env.SITE_PASSWORD?.trim()
+  ? process.env.SITE_PASSWORD
+  : "Exium";
 
 /**
  * The administrator's password.
@@ -60,6 +79,12 @@ export const SITE_PASSWORD = process.env.SITE_PASSWORD ?? "Exium";
  * that order is deliberate insurance rather than a consequence of `===`. If
  * either comparison is ever loosened, the admin test still runs before the
  * reader test rather than after it.
+ *
+ * `??`, deliberately, where `SITE_PASSWORD` above uses a blank check: setting
+ * this variable to nothing leaves it `""`, and `passwordRole`'s guard then
+ * matches no password at all, which is the correct reading of a deliberately
+ * emptied admin password. Do not "fix" this to match the line above — that
+ * would hand /admin back to a default printed in a committed file.
  */
 export const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? "Exiumm";
 
