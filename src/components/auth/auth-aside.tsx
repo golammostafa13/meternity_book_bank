@@ -21,6 +21,12 @@ import { cn } from "@/lib/utils";
  *
  * Desktop only. On a phone the form is the page, and nothing should stand
  * between the reader and it.
+ *
+ * The entry is the hero's, in miniature: the tagline rises out of its own clip
+ * box and everything under it follows a beat later. `--lag` on each block is
+ * the whole of the choreography — see `.door__rise` in the stylesheet. It is
+ * the same sequence the catalogue and the book page open with, which is the
+ * point: this page is where a reader learns what the site's motion means.
  */
 export function AuthAside({
   lang,
@@ -37,7 +43,7 @@ export function AuthAside({
     <div className="hidden lg:block">
       <p
         className={cn(
-          "inline-flex items-center gap-2 text-[0.72rem] font-semibold uppercase tracking-[0.2em] text-ink-mute",
+          "door__rise inline-flex items-center gap-2 text-[0.72rem] font-semibold uppercase tracking-[0.2em] text-ink-mute",
           bn,
         )}
       >
@@ -48,20 +54,38 @@ export function AuthAside({
         {dict.auth.sideEyebrow}
       </p>
 
-      <p
-        className={cn(
-          "mt-3 max-w-xl text-[clamp(1.6rem,2.6vw,2.2rem)] font-bold tracking-[-0.02em] text-ink",
-          lang === "bn" ? "bn leading-[1.35]" : "leading-[1.15]",
-        )}
-      >
-        {lang === "bn" ? site.taglineBn : site.tagline}
-      </p>
+      {/* One clip box around the whole tagline rather than one per line: where
+          this sentence wraps is the browser's decision at this width, and a
+          per-line mask would need the break points, which only the hero has
+          (its title is broken in the dictionary). Rising as a block still
+          reads as type arriving rather than fading in. */}
+      {/* The clip box owns its own margins (it inflates itself and cancels the
+          inflation, see the stylesheet), so the spacing above it lives on a
+          wrapper rather than fighting it. */}
+      <div className="mt-3 max-w-xl">
+        <p
+          className={cn(
+            "door__mask text-[clamp(1.6rem,2.6vw,2.2rem)] font-bold tracking-[-0.02em] text-ink",
+            lang === "bn" ? "bn leading-[1.35]" : "leading-[1.15]",
+          )}
+        >
+          <span>{lang === "bn" ? site.taglineBn : site.tagline}</span>
+        </p>
+      </div>
 
-      <p className={cn("mt-3 max-w-md text-[0.95rem] text-ink-mute", bn)}>
+      <span className="door__rule" aria-hidden="true" />
+
+      <p
+        className={cn("door__rise max-w-md text-[0.95rem] text-ink-mute", bn)}
+        style={{ "--lag": "0.34s" } as React.CSSProperties}
+      >
         {lead}
       </p>
 
-      <div className="mt-9 flex max-w-lg items-end gap-8">
+      <div
+        className="door__rise mt-9 flex max-w-lg items-end gap-8"
+        style={{ "--lag": "0.48s" } as React.CSSProperties}
+      >
         <ExiumAd
           copy={dict.sponsor}
           className="w-[17rem] shrink-0"
@@ -79,9 +103,32 @@ export function AuthAside({
 }
 
 /**
- * The card itself: heading, lead, and whatever form the door needs. Shared so
- * that the password and the register are visibly the same object seen twice
- * rather than two pages that happen to look similar.
+ * The card itself: heading, and whatever form the door needs. Shared so that
+ * the password and the register are visibly the same object seen twice rather
+ * than two pages that happen to look similar.
+ *
+ * Three boxes, and the shape of this is the record of two things that were
+ * tried here and taken back out:
+ *
+ *   • `.door__card` runs the **entry** — the card tips upright out of the page,
+ *     the same move `.reveal-3d` makes for a section. It is the only 3D move
+ *     left on the object itself.
+ *   • `.door__pane` is the **sheet** — square to the reader, with a lit top
+ *     bevel and a specular band across it, standing above its own pool of pink
+ *     light. Square, and it stays square: a resting tilt was the obvious way to
+ *     make this page read as 3D and it does not survive contact with the form.
+ *     The email field is `autoFocus` (deliberately — see `DoorForm`), so
+ *     `:focus-within` is true before the first paint and a
+ *     straighten-on-focus rule would fire before anyone saw it; and a login
+ *     card left askew while you copy a word off a printed page is an obstacle,
+ *     not a style. A stack of leaves behind the pane was the second attempt,
+ *     and it went the same way for a plainer reason: three sets of rounded
+ *     corners around one form is busier than the form, and the depth is not
+ *     worth what it costs the thing a reader is trying to fill in. The depth on
+ *     this page belongs to the light behind it — see `DoorFlow`.
+ *   • `.door__pane-body` holds the **content** above the bevel and the sheen,
+ *     which are absolutely positioned pseudo-elements and would otherwise paint
+ *     over the heading.
  */
 export function AuthCard({
   lang,
@@ -99,30 +146,60 @@ export function AuthCard({
   const bn = textClass(lang);
 
   return (
-    <div className="mx-auto w-full max-w-sm lg:mx-0">
-      <div className="rounded-3xl border border-line bg-surface p-8 shadow-e3">
-        <h1
-          className={cn("text-[1.65rem] font-bold tracking-tight text-ink", bn)}
-        >
-          {title}
-        </h1>
+    <div className="door__card mx-auto w-full max-w-sm lg:mx-0">
+      <div className="door__pane rounded-3xl border border-line bg-surface p-8 shadow-e4">
+        <div className="door__pane-body">
+          <h1
+            className={cn(
+              "door__mask text-[1.65rem] font-bold tracking-tight text-ink",
+              bn,
+            )}
+          >
+            <span>{title}</span>
+          </h1>
 
-        {lead ? (
-          <p className={cn("mt-2.5 text-[0.92rem] text-ink-mute", bn)}>{lead}</p>
-        ) : null}
+          {lead ? (
+            <p
+              className={cn("door__rise mt-2.5 text-[0.92rem] text-ink-mute", bn)}
+              style={{ "--lag": "0.26s" } as React.CSSProperties}
+            >
+              {lead}
+            </p>
+          ) : null}
 
-        <div className="mt-7">{children}</div>
+          <div
+            className="door__rise mt-7"
+            style={{ "--lag": "0.36s" } as React.CSSProperties}
+          >
+            {children}
+          </div>
+        </div>
       </div>
 
-      {footer}
+      {footer ? (
+        <div
+          className="door__rise"
+          style={{ "--lag": "0.5s" } as React.CSSProperties}
+        >
+          {footer}
+        </div>
+      ) : null}
     </div>
   );
 }
 
-/** The shell both columns sit in. */
+/**
+ * The shell both columns sit in, and the camera they share.
+ *
+ * The perspective is declared here rather than inside the card, so the card's
+ * entry tips through the same vanishing point as the plumes drifting behind it.
+ * A `perspective()` function in the card's own transform would give it a
+ * private camera and the object would arrive into a slightly different room
+ * from its own background.
+ */
 export function AuthLayoutGrid({ children }: { children: React.ReactNode }) {
   return (
-    <div className="mx-auto grid w-full max-w-6xl items-center gap-16 px-5 pb-20 lg:grid-cols-[1fr_24rem] lg:gap-20 lg:px-8">
+    <div className="door__grid mx-auto grid w-full max-w-6xl items-center gap-16 px-5 pb-20 lg:grid-cols-[1fr_24rem] lg:gap-20 lg:px-8">
       {children}
     </div>
   );

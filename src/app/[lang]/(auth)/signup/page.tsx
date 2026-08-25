@@ -44,7 +44,6 @@ export default async function RegisterPage(props: PageProps<"/[lang]/signup">) {
       <AuthCard
         lang={lang}
         title={dict.auth.signUpTitle}
-        lead={dict.auth.signUpLead}
         footer={
           <Link
             href={localePath(lang, "/signin")}

@@ -415,8 +415,6 @@ export const en = {
     registerLink: "Received a copy? Add yourself to the register",
     backToDoor: "Back to the password",
     signUpTitle: "Add yourself to the register",
-    signUpLead:
-      "So we know where the books went. It is not how you get in (the password does that), and nothing here is required except a name and a number.",
     metaSignUp: "Add yourself to the register",
     nameLabel: "Your name",
     namePlaceholder: "Nusrat Jahan",
