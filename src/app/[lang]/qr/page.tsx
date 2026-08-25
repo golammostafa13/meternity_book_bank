@@ -13,15 +13,21 @@ import { site } from "@/lib/site";
  * This page draws that code, on screen, at the address it will actually point
  * at, so it can be checked with a phone before it is checked by a print run.
  *
- * **Development only**, and enforced rather than merely documented: in a
- * production build the route answers 404. Two reasons. It would otherwise be a
- * page anyone could reach without a session (see `OPEN_ROUTES` in `proxy.ts`),
- * and a QR code is a picture of a URL — there is nothing here a visitor to the
- * live site should need and no reason to serve it to them.
+ * It runs on the live site, and it has to: the deployed origin is the only
+ * place the sheet can draw the code at the address the code will actually
+ * carry. Locally it can only ever draw localhost, which is not a thing to
+ * print.
  *
- * The code is drawn from the request's own origin, which in development is
- * localhost — useless for print. Pass `?base=https://…` to draw it for the
- * real domain instead: `/en/qr?base=https://maternitybookbank.org`.
+ * It is also open — no session, like the register itself (see `OPEN_ROUTES` in
+ * `proxy.ts`). What it shows is a picture of `/signup`, an address that is
+ * public by design and printed on paper by the thousand; a password in front
+ * of that would protect nothing and would mean the artwork could only be
+ * redrawn by whoever holds the admin word. It is `noindex` and linked from
+ * nowhere, which is the whole of its obscurity, and enough for what it is.
+ *
+ * The code is drawn from the request's own origin, so on the deployed site it
+ * is right by default. Pass `?base=https://…` for a domain this app is not yet
+ * answering on: `/en/qr?base=https://maternitybookbank.org`.
  */
 
 export const metadata: Metadata = {
@@ -98,8 +104,6 @@ function jpg(text: string): Promise<string> {
 }
 
 export default async function QrProofPage(props: PageProps<"/[lang]/qr">) {
-  if (process.env.NODE_ENV === "production") notFound();
-
   const { lang } = await props.params;
   if (!hasLocale(lang)) notFound();
 
@@ -123,8 +127,8 @@ export default async function QrProofPage(props: PageProps<"/[lang]/qr">) {
   return (
     <div className="paper-grain min-h-dvh px-5 py-16">
       <div className="mx-auto max-w-4xl">
-        <p className="text-[0.72rem] font-semibold uppercase tracking-[0.2em] text-danger">
-          Development only · not in a production build
+        <p className="text-[0.72rem] font-semibold uppercase tracking-[0.2em] text-ink-faint">
+          Proof sheet · not indexed, not linked
         </p>
 
         <h1 className="mt-3 text-3xl font-bold tracking-tight text-ink">
@@ -140,16 +144,18 @@ export default async function QrProofPage(props: PageProps<"/[lang]/qr">) {
           {override ? (
             <>
               Drawn for <span className="font-mono text-ink">{base}</span>, from
-              the <code className="font-mono">base</code> parameter.
+              the <code className="font-mono text-ink">base</code> parameter
+              rather than from this request.
             </>
           ) : (
             <>
-              Drawn for <span className="font-mono text-ink">{base}</span>, this
-              request&rsquo;s own origin — which is a development address. Add{" "}
+              Drawn for <span className="font-mono text-ink">{base}</span>, the
+              address this page was served from. If the copy will be printed
+              after a move to another domain, add{" "}
               <code className="font-mono text-ink">
-                ?base=https://your-domain
+                ?base=https://that-domain
               </code>{" "}
-              to draw the code for the live site.
+              and draw it there instead.
             </>
           )}
         </p>

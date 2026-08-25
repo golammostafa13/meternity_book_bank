@@ -44,9 +44,12 @@ import { preferredLocale } from "@/lib/i18n/negotiate";
  * the page the password is printed on.
  *
  * `qr` is the proof sheet for the code printed in that copy, and it is open
- * here for a reason that costs nothing: the page itself answers 404 outside
- * development, so this entry only ever spares whoever is preparing the artwork
- * a sign-in on their own machine. Nothing is exposed on the live site.
+ * for the same reason `signup` is: it has to work on the deployed site, since
+ * that is the only place it can draw the code at the address the code will
+ * actually carry, and requiring the admin password to see a picture of a
+ * public URL was a gate in front of nothing. Everything the sheet renders is
+ * either already public (the register's address) or typed by whoever asked for
+ * it (`?base=`). It is `noindex` and linked from nowhere.
  *
  * Everything else in the site is behind the password, catalogue included.
  */
