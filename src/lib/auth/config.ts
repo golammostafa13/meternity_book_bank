@@ -152,6 +152,14 @@ export function normaliseEmail(value: string): string {
 export function parseEmailList(value: string): string[] {
   return value
     .split(/[\s,;]+/)
+    // Quotes are stripped per entry, not from the whole value, because that is
+    // where they land. A dashboard field holding `"a@x.com,b@y.com"` keeps the
+    // quotes as literal characters, and splitting first leaves them attached to
+    // the *first* and *last* addresses — so a quoted list does not fail loudly,
+    // it silently invalidates both ends of itself. With two administrators
+    // configured that is every administrator, and the symptom is /admin
+    // refusing the right password with no clue as to why.
+    .map((entry) => entry.replace(/^["']+|["']+$/g, ""))
     .map(normaliseEmail)
     .filter(Boolean);
 }
