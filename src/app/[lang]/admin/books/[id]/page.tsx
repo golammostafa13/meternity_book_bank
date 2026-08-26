@@ -4,7 +4,12 @@ import { ExternalLink } from "lucide-react";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { BookForm } from "@/components/admin/book-form";
 import { Button } from "@/components/ui/button";
-import { getAuthors, getBookById, getCategories } from "@/lib/data/books";
+import {
+  getAuthors,
+  getBookById,
+  getCategories,
+  getSubjects,
+} from "@/lib/data/books";
 import { getDictionary, hasLocale, localePath } from "@/lib/i18n";
 import { bookTitle } from "@/lib/i18n/content";
 import { fill } from "@/lib/i18n/format";
@@ -31,10 +36,11 @@ export default async function EditBookPage(
   if (!hasLocale(lang)) notFound();
   const dict = getDictionary(lang);
 
-  const [book, authors, categories] = await Promise.all([
+  const [book, authors, categories, subjects] = await Promise.all([
     getBookById(id),
     getAuthors(),
     getCategories(),
+    getSubjects(),
   ]);
 
   if (!book) notFound();
@@ -59,6 +65,7 @@ export default async function EditBookPage(
       <BookForm
         authors={authors}
         categories={categories}
+        subjects={subjects}
         book={book}
         lang={lang}
       />

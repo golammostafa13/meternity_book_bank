@@ -65,6 +65,7 @@ function bookSchema(dict: Dictionary) {
     titleBn: z.string().trim().optional(),
     authorId: z.string().trim().min(1, e.author),
     categoryId: z.string().trim().min(1, e.category),
+    subjectId: z.string().trim().min(1, e.subject),
     publisher: z.string().trim().min(2, e.publisher),
     year: z.coerce
       .number()
@@ -114,6 +115,7 @@ function readBookForm(formData: FormData, dict: Dictionary) {
     titleBn: formData.get("titleBn") ?? undefined,
     authorId: formData.get("authorId"),
     categoryId: formData.get("categoryId"),
+    subjectId: formData.get("subjectId"),
     publisher: formData.get("publisher"),
     year: formData.get("year"),
     language: formData.get("language"),

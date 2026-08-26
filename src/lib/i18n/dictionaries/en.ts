@@ -24,6 +24,7 @@ export const en = {
     books: "Books",
     authors: "Authors",
     categories: "Categories",
+    subjects: "Subjects",
     viewAll: "View all",
     seeEverything: "See everything",
     startBrowsing: "Start browsing",
@@ -66,6 +67,7 @@ export const en = {
   nav: {
     discover: "Discover",
     categories: "Categories",
+    subjects: "Subjects",
     authors: "Authors",
     about: "About",
     contact: "Contact",
@@ -115,7 +117,7 @@ export const en = {
     featuredLead:
       "Discover a world where imagination comes alive and knowledge knows no bounds.",
     categoriesTitle: "Browse by category",
-    categoriesLead: "Six shelves. Every spine is a book you can open right now.",
+    categoriesLead: "Seven shelves. Every spine is a book you can open right now.",
     cinema: {
       eyebrow: "Sponsored by Exium MUPS 20 · Radiant Pharmaceuticals",
       /* Not the site's name. The header carries that, two hundred pixels
@@ -169,8 +171,22 @@ export const en = {
     readInBrowser: "Read in the browser",
     orKeepTheFile: "Or keep the file",
     searchPlaceholder: "Search a book, author or ISBN…",
-    filter: "Filter",
+    filter: "Filter the catalogue",
     all: "All",
+    /* Names the two pill rows. "Stage of care" rather than "Category" because
+       the word has to say what the axis *is* the moment a reader sees it
+       sitting above a second row that is also a category of something. */
+    byCategory: "Stage of care",
+    bySubject: "Subject",
+    /* --- What is currently in force ------------------------------------
+       Introduces the chip row, so it has to read as the start of a sentence
+       the chips finish: "Filtering by — Subject Gynecology". "Applied
+       filters" was the other candidate and it is the label on a control
+       panel; this one is the label on an answer. */
+    applied: "Filtering by",
+    /** Spoken name for a chip, which does a thing its own text does not say. */
+    remove: "Remove filter: {label}",
+    clearAll: "Clear all",
     sortBy: "Sort by",
     sortRecent: "Newest first",
     sortPopular: "Most downloaded",
@@ -206,6 +222,7 @@ export const en = {
     aboutThisBook: "About this book",
     details: "Details",
     publisher: "Publisher",
+    subject: "Subject",
     published: "Published",
     edition: "Edition",
     pages: "Pages",
@@ -269,10 +286,29 @@ export const en = {
   categories: {
     eyebrow: "Browse",
     title: "Categories",
-    lead: "Six shelves covering the whole collection.",
+    lead: "Seven shelves covering the whole collection, in the order a pregnancy happens.",
     notFound: "Category not found",
+    /* Was a line about fiction, poetry and children's books, inherited from the
+       general-library project this catalogue grew out of. It described a
+       collection that has never been on this site. */
     metaDescription:
-      "Browse the collection by subject: fiction, poetry, history, science, children's books and reference.",
+      "Browse the collection by stage of care: pregnancy and antenatal care, labour and birth, newborn care, breastfeeding and nutrition, complications, postnatal care, and women's health and family planning.",
+  },
+
+  subjects: {
+    eyebrow: "Browse by specialty",
+    title: "Subjects",
+    lead: "The collection as a clinician asks for it: seven subjects, the standard division of obstetrics and gynaecology.",
+    notFound: "Subject not found",
+    /** Shown on a subject that has been created but has nothing filed under it. */
+    empty: "No titles under this subject yet.",
+    /** Under the plate on a subject page, above the grid. */
+    onThisShelf: "On this shelf",
+    /** The cross-link each page carries to the other way of browsing. */
+    alsoByCategory: "Or browse by stage of care",
+    alsoBySubject: "Or browse by clinical subject",
+    metaDescription:
+      "Browse the collection by clinical subject: obstetrics, gynecology, maternal-fetal medicine, reproductive endocrinology and infertility, gynecologic oncology, urogynecology and family planning.",
   },
 
   search: {
@@ -577,6 +613,7 @@ export const en = {
       titleBnPlaceholder: "গীতাঞ্জলি",
       author: "Author",
       shelf: "Shelf",
+      subject: "Subject",
       publisher: "Publisher",
       publisherPlaceholder: "Indian Society",
       year: "Year published",
@@ -650,6 +687,7 @@ export const en = {
       title: "A title is required.",
       author: "Choose an author.",
       category: "Choose a category.",
+      subject: "Choose a subject.",
       publisher: "Who published it?",
       yearInt: "Use a four-digit year.",
       yearMin: "Before 1400 is out of scope for this catalogue.",

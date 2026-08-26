@@ -59,6 +59,13 @@ export const chapterArt: readonly ChapterArt[] = [
     artist: "DFID - UK Department for International Development",
     license: "CC BY 2.0",
     sourceUrl: "https://commons.wikimedia.org/wiki/File:A_Syrian_refugee_and_her_newborn_baby_at_a_clinic_in_Ramtha,_Jordan_(9613483141).jpg"
+  },
+  {
+    slug: "womens-health-family-planning",
+    title: "Future families - Hope, a Community Health Worker (7497778302)",
+    artist: "DFID - UK Department for International Development",
+    license: "CC BY 2.0",
+    sourceUrl: "https://commons.wikimedia.org/wiki/File:Future_families_-_Hope,_a_Community_Health_Worker_(7497778302).jpg"
   }
 ];
 

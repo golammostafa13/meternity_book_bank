@@ -81,6 +81,18 @@ export default async function CategoriesPage(
         <p className={cn("mt-4 text-lg text-ink-mute", textClass(lang))}>
           {dict.categories.lead}
         </p>
+        {/* The other way in. The two taxonomies are peers, so each listing
+            offers the other rather than the site picking one as the real one. */}
+        <Link
+          href={localePath(lang, "/subjects")}
+          className={cn(
+            "mt-5 inline-flex items-center gap-2 text-sm font-medium text-accent hover:text-accent-hover",
+            textClass(lang),
+          )}
+        >
+          {dict.subjects.alsoBySubject}
+          <ArrowRight className="size-4" aria-hidden="true" />
+        </Link>
       </header>
 
       <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">

@@ -46,7 +46,16 @@ export function SearchClient({
 
   const index = useMemo(() => {
     const mini = new MiniSearch<SearchDoc>({
-      fields: ["title", "titleBn", "author", "authorBn", "category", "categoryBn"],
+      fields: [
+        "title",
+        "titleBn",
+        "author",
+        "authorBn",
+        "category",
+        "categoryBn",
+        "subject",
+        "subjectBn",
+      ],
       storeFields: [
         "slug",
         "title",

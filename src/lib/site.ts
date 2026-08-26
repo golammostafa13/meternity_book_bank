@@ -50,6 +50,7 @@ export const site = {
   nav: [
     { href: "/books", key: "discover" },
     { href: "/categories", key: "categories" },
+    { href: "/subjects", key: "subjects" },
     { href: "/authors", key: "authors" },
     { href: "/about", key: "about" },
     { href: "/contact", key: "contact" },

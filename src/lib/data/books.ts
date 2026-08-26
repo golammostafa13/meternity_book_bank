@@ -7,6 +7,7 @@ import {
   categories,
   sampleFileName,
   shelfPrefix,
+  subjects,
 } from "@/lib/fixtures/catalogue";
 import type {
   Author,
@@ -18,6 +19,7 @@ import type {
   NewBookInput,
   NewCategoryInput,
   Paginated,
+  Subject,
 } from "@/types";
 
 /**
@@ -34,9 +36,10 @@ const DEFAULT_PER_PAGE = 12;
  * The standing order.
  *
  * Three books in this library are the reference the others are guidance from —
- * *Williams Obstetrics*, *Williams Gynecology* and *Gabbe's* — and they are
- * meant to be met first, on every shelf and under every sort. `Book.priority`
- * numbers them; everything without one sorts equal, below all three.
+ * the *Johns Hopkins Manual*, *Obstetric Decisions* and *Te Linde's* — and they
+ * are meant to be met first, on every shelf and under every sort.
+ * `Book.priority` numbers them; everything without one sorts equal, below all
+ * three.
  *
  * It is a *primary* key, not a replacement: `byPriority(a, b) || <whatever the
  * reader asked for>` keeps their chosen sort intact underneath. Every ordering
@@ -77,6 +80,7 @@ function matches(book: Book, q: string): boolean {
     book.authorNameBn ?? "",
     book.publisher,
     book.categoryName,
+    book.subjectName,
     book.isbn ?? "",
     book.code,
   ].some((field) => normalise(field).includes(needle));
@@ -88,6 +92,7 @@ export async function getBooks(
   const {
     q,
     category,
+    subject,
     language,
     status,
     sort = "recent",
@@ -99,6 +104,7 @@ export async function getBooks(
 
   if (q?.trim()) rows = rows.filter((b) => matches(b, q.trim()));
   if (category) rows = rows.filter((b) => b.categoryId === category);
+  if (subject) rows = rows.filter((b) => b.subjectId === subject);
   if (language) rows = rows.filter((b) => b.language === language);
   if (status) rows = rows.filter((b) => b.status === status);
 
@@ -238,6 +244,40 @@ export async function getCategory(slug: string): Promise<Category | null> {
   return categories.find((c) => c.slug === slug) ?? null;
 }
 
+/**
+ * Subjects: the clinical axis. Mirrors the category helpers above exactly,
+ * because the two taxonomies are peers — neither is the "real" one with the
+ * other bolted on, and the pages that render them are the same shape.
+ */
+export async function getSubjects(): Promise<Subject[]> {
+  return [...subjects];
+}
+
+export interface SubjectShelf extends Subject {
+  /** A handful of volumes to draw the subject's shelf with. */
+  shelf: Book[];
+}
+
+export async function getSubjectShelves(
+  perSubject = 8,
+): Promise<SubjectShelf[]> {
+  return subjects.map((s) => ({
+    ...s,
+    shelf: ordered(
+      books.filter((b) => b.subjectId === s.id),
+      (a, b) => b.downloads - a.downloads,
+    ).slice(0, perSubject),
+  }));
+}
+
+export async function getSubject(slug: string): Promise<Subject | null> {
+  return subjects.find((s) => s.slug === slug) ?? null;
+}
+
+export async function getBooksBySubject(subjectId: string): Promise<Book[]> {
+  return inShelfOrder(books.filter((b) => b.subjectId === subjectId));
+}
+
 export async function getAuthors(): Promise<Author[]> {
   return [...authors];
 }
@@ -279,6 +319,7 @@ export interface CatalogueStats {
   totalBooks: number;
   totalAuthors: number;
   totalCategories: number;
+  totalSubjects: number;
   totalDownloads: number;
   available: number;
   borrowed: number;
@@ -291,6 +332,7 @@ export async function getStats(): Promise<CatalogueStats> {
     totalBooks: books.length,
     totalAuthors: authors.length,
     totalCategories: categories.length,
+    totalSubjects: subjects.length,
     totalDownloads: books.reduce((sum, b) => sum + b.downloads, 0),
     available: books.filter((b) => b.status === "available").length,
     borrowed: books.filter((b) => b.status === "borrowed").length,
@@ -314,6 +356,9 @@ export interface SearchDoc {
   authorBn: string;
   category: string;
   categoryBn: string;
+  /** The clinical axis, indexed too: "gynecology" has to find the shelf. */
+  subject: string;
+  subjectBn: string;
   year: number;
   coverHue: number;
   coverImage?: string;
@@ -382,8 +427,10 @@ function deleteCoverImage(coverImage?: string): void {
 export async function insertBook(input: NewBookInput): Promise<Book> {
   const author = authors.find((a) => a.id === input.authorId);
   const category = categories.find((c) => c.id === input.categoryId);
+  const subject = subjects.find((s) => s.id === input.subjectId);
   if (!author) throw new Error(`Unknown author: ${input.authorId}`);
   if (!category) throw new Error(`Unknown category: ${input.categoryId}`);
+  if (!subject) throw new Error(`Unknown subject: ${input.subjectId}`);
 
   const seq = books.length + 1;
   // Hoisted: the file's address is built from it too, and the two must not be
@@ -406,6 +453,8 @@ export async function insertBook(input: NewBookInput): Promise<Book> {
     authorNameBn: author.nameBn,
     categoryId: category.id,
     categoryName: category.name,
+    subjectId: subject.id,
+    subjectName: subject.name,
     publisher: input.publisher,
     year: input.year,
     language: input.language,
@@ -436,6 +485,7 @@ export async function insertBook(input: NewBookInput): Promise<Book> {
 
   books.unshift(book);
   category.bookCount += 1;
+  subject.bookCount += 1;
   author.bookCount += 1;
   return book;
 }
@@ -450,13 +500,19 @@ export async function updateBook(
   const previous = books[index];
   const author = authors.find((a) => a.id === input.authorId);
   const category = categories.find((c) => c.id === input.categoryId);
-  if (!author || !category) return null;
+  const subject = subjects.find((s) => s.id === input.subjectId);
+  if (!author || !category || !subject) return null;
 
   // Moving a book between shelves or writers has to move the counts with it.
   if (previous.categoryId !== category.id) {
     const old = categories.find((c) => c.id === previous.categoryId);
     if (old) old.bookCount -= 1;
     category.bookCount += 1;
+  }
+  if (previous.subjectId !== subject.id) {
+    const old = subjects.find((s) => s.id === previous.subjectId);
+    if (old) old.bookCount -= 1;
+    subject.bookCount += 1;
   }
   if (previous.authorId !== author.id) {
     const old = authors.find((a) => a.id === previous.authorId);
@@ -480,6 +536,7 @@ export async function updateBook(
     authorName: author.name,
     authorNameBn: author.nameBn,
     categoryName: category.name,
+    subjectName: subject.name,
     coverImage,
     // The slug is a published URL: it only follows a retitle if nothing links
     // to the old one yet, which for a demo means "never".
@@ -511,8 +568,10 @@ export async function deleteBook(id: string): Promise<boolean> {
 
   const [removed] = books.splice(index, 1);
   const category = categories.find((c) => c.id === removed.categoryId);
+  const subject = subjects.find((s) => s.id === removed.subjectId);
   const author = authors.find((a) => a.id === removed.authorId);
   if (category) category.bookCount -= 1;
+  if (subject) subject.bookCount -= 1;
   if (author) author.bookCount -= 1;
   return true;
 }
@@ -585,6 +644,9 @@ export async function getSearchIndex(): Promise<SearchDoc[]> {
      category: b.categoryName,
      categoryBn:
        categories.find((c) => c.id === b.categoryId)?.nameBn ?? b.categoryName,
+     subject: b.subjectName,
+     subjectBn:
+       subjects.find((x) => x.id === b.subjectId)?.nameBn ?? b.subjectName,
      year: b.year,
      coverHue: b.coverHue,
      coverImage: b.coverImage,

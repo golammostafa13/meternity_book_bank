@@ -165,15 +165,49 @@ story while every title was a freely redistributable WHO/HSE/BC-government
 publication: the licence permitted redistribution, so a public asset URL cost
 nothing.
 
-It is no longer the whole story. The three clinical references — *Williams
-Obstetrics*, *Williams Gynecology* and *Gabbe's* — are in copyright, and each
-one's `license` field in the catalogue says so. Putting them in a public release
-publishes about 470 MB of copyrighted textbook at a guessable URL with no
-password in front of it, which is a different act from the one the paragraph
-above was written about, and it is a decision for whoever runs the library
-rather than one this repository should make quietly.
+It is no longer the whole story. **Fourteen** files must not go into a public
+release. Thirteen of them are the clinical textbooks added on 26 August 2026,
+and the fourteenth predates them:
 
-Three honest ways forward:
+| File | Why |
+| --- | --- |
+| `johns-hopkins-manual-gynecology-obstetrics.pdf` | © 2021 Wolters Kluwer, all rights reserved |
+| `obstetric-decisions.pdf` | © 2026 Davies and Sykes / CRC Press, all rights reserved |
+| `te-lindes-operative-gynecology.pdf` | © 2020 Lippincott Williams & Wilkins, all rights reserved |
+| `clinical-obstetrics-gynecology-osce.pdf` | © 2022 Wolters Kluwer (India), all rights reserved |
+| `polycystic-ovary-syndrome.pdf` | © 2022 Springer Nature, all rights reserved |
+| `assisted-reproductive-techniques-vol-2.pdf` | © 2024 Gardner and colleagues / CRC Press, all rights reserved |
+| `infertility-in-practice.pdf` | © 2023 Adam H. Balen / CRC Press, all rights reserved |
+| `100-cases-obstetrics-gynaecology.pdf` | © 2025 Bottomley and colleagues / CRC Press, all rights reserved |
+| `endometriosis-diagnosis-management.pdf` | © 2023 Amso and Banerjee / CRC Press, all rights reserved |
+| `boston-ivf-handbook-of-infertility.pdf` | © 2018 Taylor & Francis, all rights reserved |
+| `bonneys-gynaecological-surgery.pdf` | © 2011 Lopes and colleagues / Wiley-Blackwell, all rights reserved |
+| `uterine-fibroids.pdf` | © 2021 Taylor & Francis, all rights reserved |
+| `drugs-and-pregnancy.pdf` | © 2022 Taylor & Francis, all rights reserved |
+| `who-obstetric-fistula-guiding-principles.pdf` | © WHO 2006, all rights reserved — predates WHO's move to CC BY-NC-SA 3.0 IGO and was never relicensed |
+
+Each one's `license` field in the catalogue says so, and the fistula record
+carries the reasoning in a comment beside it. The thirteen textbooks are about
+292 MB of copyrighted reference between them; the fistula guide is 0.4 MB, and
+being small makes it no more publishable. Putting any of them in a public release
+publishes copyrighted material at a guessable URL with no password in front of
+it, which is a different act from the one the paragraph above was written about,
+and it is a decision for whoever runs the library rather than one this repository
+should make quietly.
+
+Because `private/books/*.pdf` now globs fourteen files that should not be
+published, the safe form of the command is to name the nineteen that may be.
+Those nineteen are exactly the titles whose `license` names WHO, a ministry or a
+Crown copyright — every pre-2026-08-26 entry except the fistula guide:
+
+```bash
+gh release create v1.0-books \
+  $(ls private/books/*.pdf | grep -E 'who-|the-pregnancy-book|my-pregnancy-hse|babys-best-chance|obstetrics-gynaecology-newborn-care-guide' \
+    | grep -v 'obstetric-fistula') \
+  --title "Book files v1.0" --notes "PDF assets served by /api/file/[slug]."
+```
+
+Three honest ways forward for the fourteen:
 
 - **Leave them off the release.** Everything renders — record, cover, metadata —
   and only the reader and the download 404. `BOOKS_RELEASE_BASE` unset locally

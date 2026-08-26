@@ -107,6 +107,21 @@ const CHAPTERS = [
     file: "File:A Syrian refugee and her newborn baby at a clinic in Ramtha, Jordan (9613483141).jpg",
     focus: { x: 0.5, y: 0.42 },
   },
+  {
+    /**
+     * A Banja La Mtsogolo community health worker — Malawi's family planning
+     * service, and the logo on her shirt reads "providing choices in
+     * reproductive health", which is the chapter in four words.
+     *
+     * A person rather than a tray of contraceptives, which is what a search for
+     * this subject mostly returns. The shelf is about counselling as much as
+     * method, and a photograph of the counsellor says so; a flat-lay of pill
+     * packets would have made it a chapter about products.
+     */
+    slug: "womens-health-family-planning",
+    file: "File:Future families - Hope, a Community Health Worker (7497778302).jpg",
+    focus: { x: 0.62, y: 0.42 },
+  },
 ];
 
 /** 16:9 at a size that survives a 2× display on a full-bleed panel. */

@@ -3887,6 +3887,11 @@ html.lenis body {
   margin-inline: auto;
   width: 100%;
   max-width: 96rem;
+  /* `minmax(0, ...)` rather than the implicit `auto`, which floors a track at
+     its content's min-content width and lets a wide row push the whole column
+     past the viewport instead of shrinking. The row of filter menus is the
+     one wide enough to do it on a phone. */
+  grid-template-columns: minmax(0, 1fr);
   padding: calc(var(--topbar-h) + 2.5rem) 1.25rem 3rem;
   display: grid;
   gap: 2.5rem;
@@ -3986,113 +3991,428 @@ html.lenis body {
   color: var(--ink);
 }
 
-/* --- The pills --------------------------------------------------- */
-.cine__pills ul {
+/* --- The filters -------------------------------------------------------
+   Four menu buttons in a row: stage of care, subject, book language, order.
+
+   What this replaces was every option of every axis laid flat — two rows of
+   pills, then a third row of sort and language links in a style of their
+   own. Twenty-three controls above the shelf, wrapping to four lines, with
+   the two that were actually set being two filled shapes somewhere among
+   them. Flat is honest and it is not readable.
+
+   A button per axis states its own answer, so the row says what the shelf is
+   filtered by before a single option is read, and it says it in four short
+   phrases instead of twenty-three long ones. The options are one click away,
+   which is the right price for a choice made once and then lived with.
+
+   `<details>` and still no script. The shared `name` makes the four an
+   exclusive group, so opening one closes the last — the one piece of menu-bar
+   behaviour that would otherwise need a listener. What is left undone is
+   closing on an outside click; the cost is a panel that stays open until the
+   reader opens another or picks something, and picking something navigates,
+   so that state lasts exactly one click.
+--------------------------------------------------------------------- */
+.cine__filters {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 0.5rem;
+  gap: 0.6rem;
+  /* The panels drop out of this row and over the book below it, which is
+     what keeps opening a menu from shoving the whole stage down the page. */
+  position: relative;
+  z-index: 5;
 }
 
-/* Sized to fit. Seven shelves with names like "Breastfeeding & Nutrition"
-   are a great deal more text than the reference's four one-word flavours,
-   and tracked capitals are the widest way to set anything; at 0.16em they
-   wrapped to a second row that left one pill stranded on its own. These
-   numbers are what puts all seven on one line at 1280 and up. */
-.cine__pill {
+.cine__filter {
+  position: relative;
+}
+
+.cine__filter-btn {
   display: inline-flex;
-  align-items: baseline;
-  gap: 0.4rem;
+  align-items: center;
+  gap: 0.55rem;
+  cursor: pointer;
+  /* Both halves of hiding the disclosure triangle: `list-style` is the one
+     the standard settled on, the pseudo-element is the one Safari shipped. */
+  list-style: none;
   border: 1px solid var(--line);
   border-radius: 999px;
-  padding: 0.5rem 0.85rem;
-  font-size: 0.64rem;
-  font-weight: 600;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-  color: var(--ink-mute);
+  padding: 0.55rem 0.9rem 0.55rem 1rem;
   transition: border-color var(--dur-fast) var(--ease-subtle),
-    color var(--dur-fast) var(--ease-subtle),
     background var(--dur-fast) var(--ease-subtle);
 }
 
-.cine__pill:hover {
+.cine__filter-btn::-webkit-details-marker {
+  display: none;
+}
+
+.cine__filter-btn::marker {
+  content: "";
+}
+
+.cine__filter-btn:hover {
   border-color: color-mix(in oklab, var(--ink) 45%, transparent);
+}
+
+.cine__filter-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.cine__filter[open] > .cine__filter-btn {
+  border-color: var(--ink);
+}
+
+/* Set, as opposed to open. Tinted rather than filled: four filled buttons in
+   a row would be a solid bar, and the accent is reserved for the chips below,
+   which are the things to press to undo this. */
+.cine__filter-btn[data-active] {
+  border-color: color-mix(in oklab, var(--ink) 55%, transparent);
+  background: color-mix(in oklab, var(--ink) 10%, transparent);
+}
+
+.cine__filter-name {
+  flex: none;
+  font-size: 0.58rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: color-mix(in oklab, var(--ink-faint) 85%, transparent);
+}
+
+/* Truncated rather than wrapped: a button that changes height with its answer
+   makes the row jump every time a filter is set. "Urogynecology / Pelvic
+   Reconstructive Surgery" is the one that needs it, and the chip below says
+   it in full, so nothing is actually hidden from the reader. */
+.cine__filter-value {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  max-width: 11rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+}
+
+.cine__filter-btn[data-active] .cine__filter-value {
   color: var(--ink);
 }
 
-/* The current filter is the filled one, as on the reference. Filled in the
-   page's ink rather than in the accent: the accent is the colour of things
-   to press, and this is the one pill that has already been pressed. */
-.cine__pill[data-active] {
-  border-color: var(--ink);
+.cine__filter-chev {
+  flex: none;
+  width: 0.85rem;
+  height: 0.85rem;
+  color: var(--ink-faint);
+  transition: transform var(--dur-fast) var(--ease-subtle);
+}
+
+.cine__filter[open] > .cine__filter-btn .cine__filter-chev {
+  transform: rotate(180deg);
+}
+
+.cine__filter-menu {
+  position: absolute;
+  z-index: 20;
+  inset-block-start: calc(100% + 0.5rem);
+  inset-inline-start: 0;
+  width: max-content;
+  min-width: 100%;
+  max-width: min(24rem, calc(100vw - 2.5rem));
+  /* Seven options fit; the eighth scrolls rather than running off the band. */
+  max-height: min(21rem, 58vh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0.35rem;
+  text-align: start;
+  border: 1px solid var(--line);
+  border-radius: 0.95rem;
+  background: var(--bg);
+  box-shadow: 0 1.5rem 3rem -1rem rgba(0, 0, 0, 0.75);
+}
+
+/* The last two open leftwards, so a menu on the right of the row cannot run
+   off the edge of the band. */
+.cine__filter:nth-last-child(-n + 2) .cine__filter-menu {
+  inset-inline-start: auto;
+  inset-inline-end: 0;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .cine__filter[open] > .cine__filter-menu {
+    animation: cine-menu-in var(--dur-fast) var(--ease-subtle) both;
+  }
+}
+
+@keyframes cine-menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(-0.35rem);
+  }
+}
+
+.cine__filter-opt {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  border-radius: 0.6rem;
+  padding: 0.5rem 0.7rem;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  transition: background var(--dur-fast) var(--ease-subtle),
+    color var(--dur-fast) var(--ease-subtle);
+}
+
+.cine__filter-opt:hover {
+  background: color-mix(in oklab, var(--ink) 10%, transparent);
+  color: var(--ink);
+}
+
+/* The chosen one, filled: inside a menu there is no ambiguity about what a
+   filled row means, which is exactly what there was when fifteen of them sat
+   side by side out in the open. */
+.cine__filter-opt[data-active] {
   background: var(--ink);
   color: var(--bg-deep);
 }
 
-.cine__pill-count {
-  font-size: 0.6rem;
-  letter-spacing: 0.1em;
+.cine__filter-opt-count {
+  flex: none;
+  font-size: 0.66rem;
+  font-variant-numeric: tabular-nums;
   opacity: 0.55;
 }
 
-/* --- Sort and language ------------------------------------------- */
-.cine__choices {
+/* --- What is in force ---------------------------------------------------
+   One chip per filter, each of them the way out of itself, and the row gone
+   entirely when nothing is set. This is the half the menus cannot do: a menu
+   hides its options by design, so without this a reader three clicks in has
+   nowhere that says what they are looking at. It is also what replaces
+   "Clear 2 filters" — a number, with nothing to say which two.
+--------------------------------------------------------------------- */
+.cine__applied {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   justify-content: center;
-  gap: 0.5rem 2rem;
-  font-size: 0.66rem;
-  letter-spacing: 0.14em;
+  gap: 0.5rem 0.85rem;
+  margin-top: 0.15rem;
+}
+
+.cine__applied > ul {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.cine__applied-label {
+  font-size: 0.58rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: color-mix(in oklab, var(--ink-faint) 85%, transparent);
+}
+
+/* In the accent, and the only thing in this band that is. The accent is the
+   colour of things to press, and after a filter is set these are the things
+   left to press. */
+.cine__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in oklab, var(--accent-lit) 42%, transparent);
+  background: color-mix(in oklab, var(--accent-lit) 14%, transparent);
+  padding: 0.38rem 0.6rem 0.38rem 0.8rem;
+  color: var(--ink);
+  transition: border-color var(--dur-fast) var(--ease-subtle),
+    background var(--dur-fast) var(--ease-subtle);
+}
+
+.cine__chip:hover {
+  border-color: color-mix(in oklab, var(--accent-lit) 80%, transparent);
+  background: color-mix(in oklab, var(--accent-lit) 26%, transparent);
+}
+
+.cine__chip-axis {
+  font-size: 0.55rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.cine__chip-value {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 
-.cine__choice {
-  display: flex;
-  align-items: baseline;
-  gap: 0.75rem;
+.cine__chip-x {
+  flex: none;
+  width: 0.8rem;
+  height: 0.8rem;
+  opacity: 0.6;
+  transition: opacity var(--dur-fast) var(--ease-subtle);
 }
 
-.cine__choice ul {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
+.cine__chip:hover .cine__chip-x {
+  opacity: 1;
 }
 
-.cine__choice-label {
-  white-space: nowrap;
-  color: color-mix(in oklab, var(--ink-faint) 80%, transparent);
-}
-
-.cine__choice-link {
-  color: var(--ink-mute);
+/* Offered from the second chip on. At one chip the chip *is* the clear-all,
+   and a second control saying the same thing is noise. */
+.cine__reset {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.38rem 0.3rem;
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
   transition: color var(--dur-fast) var(--ease-subtle);
 }
 
-.cine__choice-link:hover {
+.cine__reset:hover {
   color: var(--ink);
 }
 
-.cine__choice-link[data-active] {
-  color: var(--ink);
-  text-decoration: underline;
-  text-underline-offset: 0.35em;
-  text-decoration-color: var(--accent);
-  text-decoration-thickness: 1px;
+.cine__reset-glyph {
+  width: 0.8rem;
+  height: 0.8rem;
 }
 
-/* Bengali, everywhere this room sets small tracked capitals.
+/* --- Bengali ------------------------------------------------------------
+   Capitals do not exist in the script, so `text-transform` is a no-op and the
+   tracking is already off (the global `.bn` rule), which leaves the size: a
+   0.58rem Latin small-cap is readable and a 0.58rem Bengali word is not,
+   because the script carries its meaning in marks above and below the line
+   rather than in the letter shapes. `.bn` lands on the control, so each of
+   these reaches through to the spans inside it.
+--------------------------------------------------------------------- */
+.cine__filter-btn.bn .cine__filter-name,
+.cine__applied-label.bn {
+  font-size: 0.72rem;
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
 
-   Capitals do not exist in the script, so `text-transform` is a no-op and
-   the tracking is already off (the global `.bn` rule), which leaves the
-   size: 0.62rem is a readable Latin small-cap and an unreadable Bengali
-   word, because the script carries its meaning in marks above and below
-   the line rather than in the letter shapes. A little more of it, and the
-   leading back. */
+.cine__filter-btn.bn .cine__filter-value,
+.cine__chip.bn .cine__chip-value {
+  font-size: 0.85rem;
+  letter-spacing: 0.01em;
+  text-transform: none;
+}
+
+.cine__chip.bn .cine__chip-axis {
+  font-size: 0.7rem;
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+
+.cine__filter-opt.bn {
+  font-size: 0.82rem;
+  letter-spacing: 0.01em;
+  text-transform: none;
+  line-height: 1.6;
+}
+
+.cine__reset.bn {
+  font-size: 0.74rem;
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+
+/* Bengali runs longer than English word for word, so the value gets the room
+   the tighter Latin setting did not need. */
+.cine__filter-btn.bn .cine__filter-value {
+  max-width: 12.5rem;
+}
+
+/* --- A narrow window ----------------------------------------------------
+   Four buttons on a phone is two rows of two, full width, each one still
+   naming its axis and its answer. This is the shape that made the redesign
+   worth doing: the twenty-three pills this replaces wrapped to a column tall
+   enough to push the shelf itself off the screen.
+--------------------------------------------------------------------- */
+@media (max-width: 40rem) {
+  .cine__filters {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 0.5rem;
+    width: 100%;
+  }
+
+  .cine__filter {
+    min-width: 0;
+  }
+
+  /* Two lines, axis over answer, and the pill becomes a rounded box to suit
+     them. Side by side the axis name — tracked capitals, the widest way there
+     is to set anything — took most of a half-width button and left the answer
+     as an ellipsis, which is the one part of the button that has to be
+     readable. Stacked, the answer gets the whole width. */
+  .cine__filter-btn {
+    width: 100%;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "name chev"
+      "value chev";
+    align-items: center;
+    gap: 0.1rem 0.5rem;
+    text-align: start;
+    border-radius: 0.9rem;
+    padding: 0.5rem 0.7rem 0.55rem 0.8rem;
+  }
+
+  .cine__filter-name {
+    grid-area: name;
+  }
+
+  .cine__filter-value {
+    grid-area: value;
+  }
+
+  .cine__filter-chev {
+    grid-area: chev;
+  }
+
+  /* One per column edge, so neither column's menu leaves the screen. The
+     `nth-last-child` rule above assumes a single row and does not hold here. */
+  .cine__filter:nth-child(odd) .cine__filter-menu {
+    inset-inline-start: 0;
+    inset-inline-end: auto;
+  }
+
+  .cine__filter:nth-child(even) .cine__filter-menu {
+    inset-inline-start: auto;
+    inset-inline-end: 0;
+  }
+
+  .cine__filter-menu {
+    max-width: calc(100vw - 2.5rem);
+  }
+
+  .cine__filter-value {
+    max-width: 100%;
+  }
+}
+
+/* The rest of this room's small tracked capitals, taking the same Bengali
+   exception the filters take above, and for the same reason. */
 .cine__eyebrow.bn,
-.cine__pill.bn,
-.cine__choice-label.bn,
-.cine__choice-link.bn,
 .cine__spec-label.bn,
 .cine__strapline.bn {
   font-size: 0.78rem;

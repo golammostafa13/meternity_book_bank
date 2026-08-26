@@ -3,18 +3,19 @@ import { notFound } from "next/navigation";
 import { BookGrid3D } from "@/components/book-grid-3d";
 import {
   CatalogueCinema,
-  type CatalogueChoice,
-  type CataloguePill,
+  type CatalogueChip,
+  type CatalogueFilter,
   type CatalogueSpotlight,
 } from "@/components/catalogue-cinema";
 import { Pagination } from "@/components/pagination";
-import { getBooks, getCategories } from "@/lib/data/books";
+import { getBooks, getCategories, getSubjects } from "@/lib/data/books";
 import { getDictionary, hasLocale, localePath } from "@/lib/i18n";
 import {
   bookAuthorName,
   bookDescription,
   bookTitle,
   categoryName,
+  subjectName,
   formatNumberIn,
   formatYearIn,
   textClass,
@@ -48,8 +49,8 @@ export async function generateMetadata(
  * The catalogue.
  *
  * Two halves, and the split is the point. The room at the top is where a reader
- * arrives: it names the shelf, offers the few choices there are as pills, and
- * stands one book up properly so the shelf has a face. The grid below is where
+ * arrives: it names the shelf, puts the four filters within reach of one
+ * click each, and stands one book up properly so the shelf has a face. The grid below is where
  * the same reader looks something up. Running the two together (a title, a form
  * and a grid stacked down one page) is what this replaces, and it did neither
  * job especially well.
@@ -71,15 +72,17 @@ export default async function BooksPage(props: PageProps<"/[lang]/books">) {
   const query: CatalogueQuery = {
     q: first(sp.q),
     category: first(sp.category),
+    subject: first(sp.subject),
     language: first(sp.language) as BookLanguage | undefined,
     sort: first(sp.sort) as CatalogueQuery["sort"],
     page: Number(first(sp.page) ?? 1) || 1,
     perPage: 12,
   };
 
-  const [result, categories] = await Promise.all([
+  const [result, categories, subjects] = await Promise.all([
     getBooks(query),
     getCategories(),
+    getSubjects(),
   ]);
 
   const base = localePath(lang, "/books");
@@ -97,6 +100,7 @@ export default async function BooksPage(props: PageProps<"/[lang]/books">) {
     const merged = {
       q: query.q,
       category: query.category,
+      subject: query.subject,
       language: query.language,
       sort: query.sort,
       ...changes,
@@ -108,23 +112,19 @@ export default async function BooksPage(props: PageProps<"/[lang]/books">) {
     return search ? `${base}?${search}` : base;
   };
 
-  /* --- The filters, as links -------------------------------------------- */
-  const pills: CataloguePill[] = [
-    {
-      key: "all",
-      label: dict.catalogue.all,
-      href: hrefWith({ category: undefined }),
-      active: !query.category,
-    },
-    ...categories.map((category) => ({
-      key: category.id,
-      label: categoryName(category, lang),
-      count: formatNumberIn(category.bookCount, lang),
-      href: hrefWith({ category: category.id }),
-      active: query.category === category.id,
-    })),
-  ];
+  /* --- The filters ------------------------------------------------------
+     Four axes, one row of menus, and the first two combine: a reader can ask
+     for labour and birth *and* obstetrics, and the URL carries both. They are
+     not nested — see the note on `Subject` in `types` — so neither filters the
+     other's options, and a combination that matches nothing says so rather
+     than quietly hiding the option that produced it.
 
+     Sort and book language are in the same row and in the same shape. They
+     were a separate style of control underneath, on the theory that they are
+     quieter; but a reader looking for a Bengali book does not experience
+     "which language" as a quieter question than "which shelf", and two
+     grammars for one job is the thing that made this band hard to read.
+     --------------------------------------------------------------------- */
   const sorts: CatalogueQuery["sort"][] = ["recent", "popular", "title", "year"];
   const sortLabel: Record<string, string> = {
     recent: dict.catalogue.sortRecent,
@@ -132,22 +132,70 @@ export default async function BooksPage(props: PageProps<"/[lang]/books">) {
     title: dict.catalogue.sortTitle,
     year: dict.catalogue.sortYear,
   };
+  const sort = query.sort ?? "recent";
 
-  const choices: CatalogueChoice[] = [
+  /* The *book's* language, which is a different question from the interface
+     language: a Bengali reader may well want an English title. Both are named
+     in their own script, never translated. */
+  const languageLabel: Record<string, string> = { bn: "বাংলা", en: "English" };
+
+  const activeCategory = categories.find((c) => c.id === query.category);
+  const activeSubject = subjects.find((s) => s.id === query.subject);
+
+  const filters: CatalogueFilter[] = [
     {
-      label: dict.catalogue.sortBy,
-      options: sorts.map((sort) => ({
-        key: String(sort),
-        label: sortLabel[String(sort)],
-        href: hrefWith({ sort }),
-        active: (query.sort ?? "recent") === sort,
-      })),
+      key: "category",
+      label: dict.catalogue.byCategory,
+      value: activeCategory
+        ? categoryName(activeCategory, lang)
+        : dict.catalogue.all,
+      active: Boolean(activeCategory),
+      options: [
+        {
+          key: "all",
+          label: dict.catalogue.all,
+          href: hrefWith({ category: undefined }),
+          active: !query.category,
+        },
+        ...categories.map((category) => ({
+          key: category.id,
+          label: categoryName(category, lang),
+          count: formatNumberIn(category.bookCount, lang),
+          href: hrefWith({ category: category.id }),
+          active: query.category === category.id,
+        })),
+      ],
     },
     {
-      /* The *book's* language, which is a different question from the
-         interface language: a Bengali reader may well want an English title.
-         The two options are named in their own scripts, never translated. */
+      key: "subject",
+      label: dict.catalogue.bySubject,
+      value: activeSubject
+        ? subjectName(activeSubject, lang)
+        : dict.catalogue.all,
+      active: Boolean(activeSubject),
+      options: [
+        {
+          key: "all",
+          label: dict.catalogue.all,
+          href: hrefWith({ subject: undefined }),
+          active: !query.subject,
+        },
+        ...subjects.map((subject) => ({
+          key: subject.id,
+          label: subjectName(subject, lang),
+          count: formatNumberIn(subject.bookCount, lang),
+          href: hrefWith({ subject: subject.id }),
+          active: query.subject === subject.id,
+        })),
+      ],
+    },
+    {
+      key: "language",
       label: dict.catalogue.language,
+      value: query.language
+        ? languageLabel[query.language]
+        : dict.catalogue.allLanguages,
+      active: Boolean(query.language),
       options: [
         {
           key: "any",
@@ -155,21 +203,77 @@ export default async function BooksPage(props: PageProps<"/[lang]/books">) {
           href: hrefWith({ language: undefined }),
           active: !query.language,
         },
-        {
-          key: "bn",
-          label: "বাংলা",
-          href: hrefWith({ language: "bn" }),
-          active: query.language === "bn",
-        },
-        {
-          key: "en",
-          label: "English",
-          href: hrefWith({ language: "en" }),
-          active: query.language === "en",
-        },
+        ...(["bn", "en"] as const).map((code) => ({
+          key: code,
+          label: languageLabel[code],
+          href: hrefWith({ language: code }),
+          active: query.language === code,
+        })),
       ],
     },
+    {
+      /* Never `active`, however it is set, and never chipped below: sorting
+         changes what comes first, not what is there. The menu stating its own
+         answer is the whole of the signal a reader needs that they changed
+         it, and calling it a filter would tell them the shelf is short when
+         it is not. */
+      key: "sort",
+      label: dict.catalogue.sortBy,
+      value: sortLabel[String(sort)],
+      active: false,
+      options: sorts.map((option) => ({
+        key: String(option),
+        label: sortLabel[String(option)],
+        href: hrefWith({ sort: option }),
+        active: sort === option,
+      })),
+    },
   ];
+
+  /* --- What is in force, spelled out ------------------------------------
+     One chip per filter, each of them the way out of itself, and the whole
+     row absent when nothing is set. This is what the menus above cannot do:
+     a menu hides its options by design, so without this a reader four clicks
+     in has no single place that says what they are looking at.
+     --------------------------------------------------------------------- */
+  const applied: CatalogueChip[] = [];
+  const chip = (key: string, axis: string, value: string, href: string) => {
+    applied.push({
+      key,
+      axis,
+      value,
+      href,
+      /* The link's text is "Subject Gynecology ×", which says what it is and
+         not what pressing it does. The accessible name says both. */
+      removeLabel: fill(lang, dict.catalogue.remove, {
+        label: `${axis} ${value}`,
+      }),
+    });
+  };
+
+  if (query.q)
+    chip("q", dict.common.search, `\u201c${query.q}\u201d`, hrefWith({ q: undefined }));
+  if (activeCategory)
+    chip(
+      "category",
+      dict.catalogue.byCategory,
+      categoryName(activeCategory, lang),
+      hrefWith({ category: undefined }),
+    );
+  if (activeSubject)
+    chip(
+      "subject",
+      dict.catalogue.bySubject,
+      subjectName(activeSubject, lang),
+      hrefWith({ subject: undefined }),
+    );
+  if (query.language)
+    chip(
+      "language",
+      dict.catalogue.language,
+      languageLabel[query.language],
+      hrefWith({ language: undefined }),
+    );
 
   /* --- The book standing in the middle ---------------------------------- */
   const lead = result.items[0];
@@ -245,17 +349,27 @@ export default async function BooksPage(props: PageProps<"/[lang]/books">) {
           searchPlaceholder: dict.catalogue.searchPlaceholder,
           searchLabel: dict.common.search,
           filterLabel: dict.catalogue.filter,
+          appliedLabel: dict.catalogue.applied,
           openRecord: dict.catalogue.openRecord,
           seeAll: dict.catalogue.seeAll,
           empty: dict.catalogue.empty,
         }}
-        pills={pills}
-        choices={choices}
+        filters={filters}
+        applied={applied}
+        reset={
+          /* Two or more chips is where unpicking them one at a time starts to
+             cost more than starting again. At one chip the chip *is* the
+             clear-all, and a second control saying so is noise. */
+          applied.length > 1
+            ? { label: dict.catalogue.clearAll, href: base }
+            : undefined
+        }
         spotlight={spotlight}
         search={{
           action: base,
           keep: {
             category: query.category,
+            subject: query.subject,
             language: query.language,
             sort: query.sort,
           },
@@ -301,6 +415,7 @@ export default async function BooksPage(props: PageProps<"/[lang]/books">) {
             searchParams={{
               q: query.q,
               category: query.category,
+              subject: query.subject,
               language: query.language,
               sort: query.sort,
             }}

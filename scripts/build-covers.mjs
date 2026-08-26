@@ -2,7 +2,7 @@
  * Builds the book cover WebP images for the public catalogue.
  *
  *   node scripts/build-covers.mjs                    # every book
- *   node scripts/build-covers.mjs williams-obstetrics  # one, or a few
+ *   node scripts/build-covers.mjs uterine-fibroids       # one, or a few
  *
  * Every cover is page 1 of the book itself, rendered with `pdftoppm` and
  * resized through `sharp`. Not a stock photo, not a scan of a different
@@ -10,18 +10,21 @@
  * they open the file, which is the only way the two can never disagree.
  *
  * The exception is a book that arrived **with its jacket art**: drop it in
- * `private/covers/<slug>.<ext>` and that image is used instead of page 1. The
- * three obstetrics references are like this. Their files are scans that open
- * on a copyright notice, so rendering page 1 would put a wall of small print
- * where the cover should be, and the publisher's jacket is both the truer
- * picture of the book and the one a clinician recognises on a shelf.
+ * `private/covers/<slug>.<ext>` and that image is used instead of page 1. Most
+ * of the clinical textbooks are like this. Their files open on a half-title or
+ * a copyright notice, so rendering page 1 would put a wall of small print where
+ * the cover should be, and the publisher's jacket is both the truer picture of
+ * the book and the one a clinician recognises on a shelf. Supply one only when
+ * it is the jacket of *that* volume: the *Textbook of Assisted Reproductive
+ * Techniques* arrived with Volume 1's jacket and Volume 2's file, so it renders
+ * page 1 instead.
  *
  * Naming the source file after the slug is what keeps this honest: there is no
  * mapping table to drift, and a supplied cover for a book that does not exist
  * is a filename nobody will ever read.
  *
  * Passing slugs builds only those, which is how a new book is added without
- * rewriting the sixteen WebPs that were already correct.
+ * rewriting the WebPs that were already correct.
  *
  * Output: public/covers/<slug>.webp, 640×900, white ground, q82. Committed to
  * the repo so the build never depends on `private/`, which is gitignored and

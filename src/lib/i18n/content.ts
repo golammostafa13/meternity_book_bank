@@ -1,5 +1,5 @@
 import type { Locale } from "@/lib/i18n/config";
-import type { Author, Book, Category } from "@/types";
+import type { Author, Book, Category, Subject } from "@/types";
 
 /**
  * Choosing which language a *catalogue record* renders in.
@@ -78,6 +78,20 @@ export function categoryDescription(
   lang: Locale,
 ): string {
   return prefer(lang, category.descriptionBn, category.description);
+}
+
+export function subjectName(
+  subject: Pick<Subject, "name" | "nameBn">,
+  lang: Locale,
+): string {
+  return prefer(lang, subject.nameBn, subject.name);
+}
+
+export function subjectDescription(
+  subject: Pick<Subject, "description" | "descriptionBn">,
+  lang: Locale,
+): string {
+  return prefer(lang, subject.descriptionBn, subject.description);
 }
 
 /**

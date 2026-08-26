@@ -17,6 +17,7 @@ import {
   getBook,
   getCategories,
   getRelated,
+  getSubjects,
 } from "@/lib/data/books";
 import { getDictionary, hasLocale, localePath, locales } from "@/lib/i18n";
 import {
@@ -25,6 +26,7 @@ import {
   bookSubtitle,
   bookTitle,
   categoryName,
+  subjectName,
   formatCompactIn,
   formatDateIn,
   formatNumberIn,
@@ -38,8 +40,8 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 /**
- * Prerender every book in both languages. Two locales × sixteen books is
- * thirty-two static documents: nothing next to what a rebuild would cost, and
+ * Prerender every book in both languages. Two locales × thirty-three books is
+ * sixty-six static documents: nothing next to what a rebuild would cost, and
  * it means a Bengali book page is as cacheable as an English one.
  */
 export async function generateStaticParams() {
@@ -97,10 +99,11 @@ export default async function BookDetailPage(
   const book = await getBook(slug);
   if (!book) notFound();
 
-  const [related, author, categories, all] = await Promise.all([
+  const [related, author, categories, subjects, all] = await Promise.all([
     getRelated(book, 4),
     getAuthorById(book.authorId),
     getCategories(),
+    getSubjects(),
     getAllBooks(),
   ]);
 
@@ -116,6 +119,13 @@ export default async function BookDetailPage(
     ? categoryName(category, lang)
     : book.categoryName;
   const art = category ? artFor(category.slug) : undefined;
+
+  // Same fallback as `shelfName`: prefer the live record so a renamed subject
+  // shows its new name, fall back to the copy denormalised onto the book.
+  const subject = subjects.find((s) => s.id === book.subjectId);
+  const subjectShelf = subject
+    ? subjectName(subject, lang)
+    : book.subjectName;
 
   /* The scales the two measured figures are read against. Both are the whole
      collection, so a 528-page manual draws a full bar and a 24-page leaflet
@@ -201,6 +211,10 @@ export default async function BookDetailPage(
     caption: room.imprintPlate,
     rows: [
       { label: dict.book.publisher, value: book.publisher },
+      /* The clinical subject, named on the record. Plain text rather than a
+         link: an imprint row's href opens in a new tab, which is right for the
+         source URL beside it and wrong for a shelf on this same site. */
+      { label: dict.book.subject, value: subjectShelf },
       { label: dict.book.published, value: formatYearIn(book.year, lang) },
       ...(book.edition
         ? [{ label: dict.book.edition, value: book.edition }]

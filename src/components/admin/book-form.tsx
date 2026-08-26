@@ -18,9 +18,14 @@ import {
 } from "@/lib/actions/admin";
 import { getDictionary } from "@/lib/i18n";
 import { localePath, type Locale } from "@/lib/i18n/config";
-import { authorName, categoryName, textClass } from "@/lib/i18n/content";
+import {
+  authorName,
+  categoryName,
+  subjectName,
+  textClass,
+} from "@/lib/i18n/content";
 import { cn } from "@/lib/utils";
-import type { Author, Book, Category } from "@/types";
+import type { Author, Book, Category, Subject } from "@/types";
 
 /**
  * Catalogue a book, or edit one already on the shelf.
@@ -40,11 +45,13 @@ const empty: ActionState = { ok: false };
 export function BookForm({
   authors,
   categories,
+  subjects,
   book,
   lang,
 }: {
   authors: Author[];
   categories: Category[];
+  subjects: Subject[];
   /** Absent when cataloguing something new. */
   book?: Book;
   lang: Locale;
@@ -189,6 +196,23 @@ export function BookForm({
                 {categories.map((c) => (
                   <option key={c.id} value={c.id}>
                     {categoryName(c, lang)}
+                  </option>
+                ))}
+              </select>
+            </Field>
+
+            {/* The clinical axis, beside the shelf it is not a synonym for: a
+                book has both, and picking one does not pick the other. */}
+            <Field label={f.subject} htmlFor="subjectId" error={errors.subjectId}>
+              <select
+                id="subjectId"
+                name="subjectId"
+                defaultValue={book?.subjectId ?? subjects[0]?.id}
+                className={fieldClass(errors.subjectId)}
+              >
+                {subjects.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {subjectName(s, lang)}
                   </option>
                 ))}
               </select>

@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { BookForm } from "@/components/admin/book-form";
-import { getAuthors, getCategories } from "@/lib/data/books";
+import { getAuthors, getCategories, getSubjects } from "@/lib/data/books";
 import { getDictionary, hasLocale } from "@/lib/i18n";
 
 export async function generateMetadata(
@@ -19,9 +19,10 @@ export default async function NewBookPage(
   if (!hasLocale(lang)) notFound();
   const dict = getDictionary(lang);
 
-  const [authors, categories] = await Promise.all([
+  const [authors, categories, subjects] = await Promise.all([
     getAuthors(),
     getCategories(),
+    getSubjects(),
   ]);
 
   return (
@@ -33,6 +34,7 @@ export default async function NewBookPage(
       <BookForm
         authors={authors}
         categories={categories}
+        subjects={subjects}
         lang={lang}
       />
     </AdminShell>

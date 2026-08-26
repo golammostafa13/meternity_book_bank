@@ -35,6 +35,41 @@ export interface Category {
   bookCount: number;
 }
 
+/**
+ * A clinical subject: the second way into the catalogue.
+ *
+ * `Category` files a book by where the reader is in the pregnancy — antenatal,
+ * labour, postnatal — which is the question a mother asks. `Subject` files the
+ * same book by the specialty that owns it, which is the question a clinician
+ * asks, and the two do not nest: *Managing Complications in Pregnancy and
+ * Childbirth* is "Complications & Emergencies" to a mother and "Obstetrics" to
+ * a registrar. Neither is a sub-tree of the other, so they are two flat
+ * taxonomies over one shelf rather than one hierarchy pretending to serve both.
+ *
+ * The seven are the standard subspecialty division of obstetrics and
+ * gynaecology, and they are fixed: a library does not get to invent an eighth
+ * branch of the specialty. That is why there is no admin screen to add one,
+ * where categories have one.
+ */
+export interface Subject {
+  id: string;
+  slug: string;
+  name: string;
+  nameBn: string;
+  description: string;
+  /** Bengali readers see this; falls back to `description` when absent. */
+  descriptionBn?: string;
+  icon: string;
+  /**
+   * The subject's plate: `/subjects/<slug>.webp`, built by
+   * `scripts/build-subject-art.mjs`. Required, not optional — a subject page
+   * opens on this image, so a subject without one is a broken page rather than
+   * a page with something missing. Seven subjects, seven files, checked in.
+   */
+  image: string;
+  bookCount: number;
+}
+
 export interface Book {
   id: string;
   /** Human-facing accession code shown in the admin table, e.g. BK-08745. */
@@ -51,6 +86,13 @@ export interface Book {
 
   categoryId: string;
   categoryName: string;
+
+  /**
+   * The clinical subject. Denormalised alongside the id for the same reason
+   * `categoryName` is: a card renders without a join.
+   */
+  subjectId: string;
+  subjectName: string;
 
   publisher: string;
   year: number;
@@ -118,8 +160,8 @@ export interface Book {
   /**
    * Standing order, low first. Absent on almost every book.
    *
-   * The library has three cornerstone references — *Williams Obstetrics*,
-   * *Williams Gynecology* and *Gabbe's* — and they are meant to be the first
+   * The library has three cornerstone references — the *Johns Hopkins Manual*,
+   * *Obstetric Decisions* and *Te Linde's* — and they are meant to be the first
    * thing a reader meets, on every shelf, under every sort. `featured` cannot
    * say that: it is a boolean, so it can mark a book as important but not say
    * which important book comes first, and it is a curator's flag that the
@@ -146,6 +188,8 @@ export interface NewBookInput {
   titleBn?: string;
   authorId: string;
   categoryId: string;
+  /** The clinical subject. Fixed list; see `Subject`. */
+  subjectId: string;
   publisher: string;
   year: number;
   language: BookLanguage;
@@ -189,6 +233,7 @@ export interface NewCategoryInput {
 export interface CatalogueQuery {
   q?: string;
   category?: string;
+  subject?: string;
   language?: BookLanguage;
   status?: BookStatus;
   sort?: "recent" | "popular" | "title" | "year";
