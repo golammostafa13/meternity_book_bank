@@ -96,6 +96,12 @@ function localeOf(formData: FormData) {
 /**
  * Where to go once through the door.
  *
+ * The fallback is the home page, not the catalogue. Someone who arrived at the
+ * bare domain was sent straight to the door by the proxy and has never seen the
+ * library at all; landing them in a paginated grid skips the one page written
+ * to introduce the place. A reader who was reaching for a particular book still
+ * gets that book, because `next` is honoured first.
+ *
  * `next` comes from the proxy's redirect and is therefore attacker-supplied.
  * Only a same-site absolute path is honoured: `//evil.example` is a protocol-
  * relative URL that browsers treat as another origin, which is why the second
@@ -104,7 +110,7 @@ function localeOf(formData: FormData) {
 function destination(
   formData: FormData,
   lang: ReturnType<typeof localeOf>,
-  fallback = "/books",
+  fallback = "/",
 ) {
   const next = String(formData.get("next") ?? "");
   return next.startsWith("/") && !next.startsWith("//")

@@ -30,6 +30,39 @@ import type {
 
 const DEFAULT_PER_PAGE = 12;
 
+/**
+ * The standing order.
+ *
+ * Three books in this library are the reference the others are guidance from —
+ * *Williams Obstetrics*, *Williams Gynecology* and *Gabbe's* — and they are
+ * meant to be met first, on every shelf and under every sort. `Book.priority`
+ * numbers them; everything without one sorts equal, below all three.
+ *
+ * It is a *primary* key, not a replacement: `byPriority(a, b) || <whatever the
+ * reader asked for>` keeps their chosen sort intact underneath. Every ordering
+ * this file returns goes through it, which is the point — a rail that quietly
+ * dropped the three because it happened to sort by download count would be the
+ * bug this is here to prevent.
+ */
+const LAST = Number.MAX_SAFE_INTEGER;
+
+function byPriority(a: Book, b: Book): number {
+  return (a.priority ?? LAST) - (b.priority ?? LAST);
+}
+
+/** Sorted copy, priority first, then `compare`. Never mutates the input. */
+function ordered<T extends Book>(
+  rows: readonly T[],
+  compare: (a: T, b: T) => number,
+): T[] {
+  return [...rows].sort((a, b) => byPriority(a, b) || compare(a, b));
+}
+
+/** The catalogue's own order, priority first: the default for a plain list. */
+function inShelfOrder<T extends Book>(rows: readonly T[]): T[] {
+  return ordered(rows, () => 0);
+}
+
 function normalise(value: string): string {
   return value.toLowerCase().normalize("NFC");
 }
@@ -69,7 +102,9 @@ export async function getBooks(
   if (language) rows = rows.filter((b) => b.language === language);
   if (status) rows = rows.filter((b) => b.status === status);
 
-  rows.sort((a, b) => {
+  // The reader's sort, underneath the standing order. A book they asked to see
+  // by title is still in title order; the three references are simply above it.
+  rows = ordered(rows, (a, b) => {
     switch (sort) {
       case "popular":
         return b.downloads - a.downloads;
@@ -97,7 +132,7 @@ export async function getBooks(
 }
 
 export async function getAllBooks(): Promise<Book[]> {
-  return [...books];
+  return inShelfOrder(books);
 }
 
 export async function getBook(slug: string): Promise<Book | null> {
@@ -139,17 +174,18 @@ export async function getBookFile(slug: string): Promise<{
 }
 
 export async function getFeatured(limit = 6): Promise<Book[]> {
-  return books.filter((b) => b.featured).slice(0, limit);
+  return inShelfOrder(books.filter((b) => b.featured)).slice(0, limit);
 }
 
 export async function getRecent(limit = 8): Promise<Book[]> {
-  return [...books]
-    .sort((a, b) => b.addedAt.localeCompare(a.addedAt))
-    .slice(0, limit);
+  return ordered(books, (a, b) => b.addedAt.localeCompare(a.addedAt)).slice(
+    0,
+    limit,
+  );
 }
 
 export async function getPopular(limit = 8): Promise<Book[]> {
-  return [...books].sort((a, b) => b.downloads - a.downloads).slice(0, limit);
+  return ordered(books, (a, b) => b.downloads - a.downloads).slice(0, limit);
 }
 
 /** Same author first, then same category: enough for a demo "related" rail. */
@@ -163,7 +199,13 @@ export async function getRelated(book: Book, limit = 4): Promise<Book[]> {
       b.id !== book.id &&
       b.authorId !== book.authorId,
   );
-  return [...sameAuthor, ...sameCategory].slice(0, limit);
+  // Priority applies within each group rather than across them: a reader on a
+  // WHO guideline is better served by its own author's other volumes than by
+  // being sent to the textbook every rail on the site already offers.
+  return [
+    ...inShelfOrder(sameAuthor),
+    ...inShelfOrder(sameCategory),
+  ].slice(0, limit);
 }
 
 export async function getCategories(): Promise<Category[]> {
@@ -185,10 +227,10 @@ export async function getCategoryShelves(
 ): Promise<CategoryShelf[]> {
   return categories.map((c) => ({
     ...c,
-    shelf: books
-      .filter((b) => b.categoryId === c.id)
-      .sort((a, b) => b.downloads - a.downloads)
-      .slice(0, perCategory),
+    shelf: ordered(
+      books.filter((b) => b.categoryId === c.id),
+      (a, b) => b.downloads - a.downloads,
+    ).slice(0, perCategory),
   }));
 }
 
@@ -210,10 +252,10 @@ export async function getAuthorShelves(
 ): Promise<AuthorShelf[]> {
   return authors.map((a) => ({
     ...a,
-    shelf: books
-      .filter((b) => b.authorId === a.id)
-      .sort((x, y) => y.downloads - x.downloads)
-      .slice(0, perAuthor),
+    shelf: ordered(
+      books.filter((b) => b.authorId === a.id),
+      (x, y) => y.downloads - x.downloads,
+    ).slice(0, perAuthor),
   }));
 }
 
@@ -226,11 +268,11 @@ export async function getAuthorById(id: string): Promise<Author | null> {
 }
 
 export async function getBooksByAuthor(authorId: string): Promise<Book[]> {
-  return books.filter((b) => b.authorId === authorId);
+  return inShelfOrder(books.filter((b) => b.authorId === authorId));
 }
 
 export async function getBooksByCategory(categoryId: string): Promise<Book[]> {
-  return books.filter((b) => b.categoryId === categoryId);
+  return inShelfOrder(books.filter((b) => b.categoryId === categoryId));
 }
 
 export interface CatalogueStats {
@@ -531,7 +573,9 @@ export async function getStorageUsage(): Promise<StorageUsage> {
 }
 
 export async function getSearchIndex(): Promise<SearchDoc[]> {
-  return books.map((b) => ({
+  // Ordered, even though MiniSearch ranks a query by relevance: the search page
+  // shows this list as-is before anything is typed.
+  return inShelfOrder(books).map((b) => ({
     id: b.id,
     slug: b.slug,
     title: b.title,

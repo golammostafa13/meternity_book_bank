@@ -52,9 +52,12 @@ export default async function SignInPage(props: PageProps<"/[lang]/signin">) {
       ? normaliseEmail(sp.email)
       : "";
 
+  // Already in: the door has nothing to show them. Same destination as the
+  // form's own, so arriving here with a live session and signing in properly
+  // cannot land in two different places.
   const session = await getSession();
   if (session) {
-    redirect(next.startsWith("/") ? next : localePath(lang, "/books"));
+    redirect(next.startsWith("/") ? next : localePath(lang, "/"));
   }
 
   const bn = textClass(lang);

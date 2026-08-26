@@ -114,6 +114,24 @@ export interface Book {
   downloads: number;
   rating: number;
   featured: boolean;
+
+  /**
+   * Standing order, low first. Absent on almost every book.
+   *
+   * The library has three cornerstone references — *Williams Obstetrics*,
+   * *Williams Gynecology* and *Gabbe's* — and they are meant to be the first
+   * thing a reader meets, on every shelf, under every sort. `featured` cannot
+   * say that: it is a boolean, so it can mark a book as important but not say
+   * which important book comes first, and it is a curator's flag that the
+   * admin form lets anyone toggle.
+   *
+   * So this is a separate, ordered field, and the data layer applies it as the
+   * primary sort key on *every* ordering it returns — recent, popular, title,
+   * year, related, the shelves, the search index. A sort the reader chose still
+   * happens; it just happens below these three. See `lib/data/books`.
+   */
+  priority?: number;
+
   addedAt: string;
   uploadedBy: string;
 }

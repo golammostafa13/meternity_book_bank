@@ -155,11 +155,34 @@ gh release create v1.0-books private/books/*.pdf \
   --title "Book files v1.0" --notes "PDF assets served by /api/file/[slug]."
 ```
 
-Note that a public repository's release assets are public URLs. The password
-gates the reader and the download button, not the underlying asset; every title
-in this collection is a freely redistributable WHO/HSE/BC-government
-publication, which is what makes that acceptable here. It would not be for a
-collection of copyrighted textbooks.
+Adding files to a release that already exists is `gh release upload v1.0-books
+private/books/<slug>.pdf`, which matters because the glob above is no longer
+the right thing to run unthinkingly — see below.
+
+**A public repository's release assets are public URLs.** The password gates the
+reader and the download button, not the underlying asset. That was the whole
+story while every title was a freely redistributable WHO/HSE/BC-government
+publication: the licence permitted redistribution, so a public asset URL cost
+nothing.
+
+It is no longer the whole story. The three clinical references — *Williams
+Obstetrics*, *Williams Gynecology* and *Gabbe's* — are in copyright, and each
+one's `license` field in the catalogue says so. Putting them in a public release
+publishes about 470 MB of copyrighted textbook at a guessable URL with no
+password in front of it, which is a different act from the one the paragraph
+above was written about, and it is a decision for whoever runs the library
+rather than one this repository should make quietly.
+
+Three honest ways forward:
+
+- **Leave them off the release.** Everything renders — record, cover, metadata —
+  and only the reader and the download 404. `BOOKS_RELEASE_BASE` unset locally
+  still serves them from `private/books/`, so development is unaffected.
+- **Host them somewhere the URL is not public.** `BOOKS_RELEASE_BASE` can point
+  at an R2 bucket instead, but note that the route fetches the asset with no
+  credentials: anything requiring an `Authorization` header needs that header
+  added to `serveFromRelease` first.
+- **Publish them anyway**, having decided the risk is the library's to carry.
 
 ### Search engines
 

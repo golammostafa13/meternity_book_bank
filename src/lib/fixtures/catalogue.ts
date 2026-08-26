@@ -3,8 +3,9 @@ import type { Author, Book, BookStatus, Category } from "@/types";
 /**
  * Catalogue fixtures for the Maternity Book Bank.
  *
- * Sixteen real files, on pregnancy, birth and the first weeks. A compact seed
- * list is expanded into full `Book` records by `buildBook` below, so the
+ * Nineteen real files: sixteen on pregnancy, birth and the first weeks, and
+ * the three clinical references the rest of them are arguments from. A compact
+ * seed list is expanded into full `Book` records by `buildBook` below, so the
  * verified metadata stays readable and the derived fields (codes, shelves,
  * counts) stay internally consistent.
  *
@@ -16,6 +17,12 @@ import type { Author, Book, BookStatus, Category } from "@/types";
  * Not from the file names, which are wrong or useless on most of them: the
  * supplied `BBC-7th-edition-FINAL-Nov2019.pdf` is *Baby's Best Chance*, and
  * `vut-mn-21-01-operationalguidance-…` is Vanuatu's obstetric guidelines.
+ *
+ * One exception, declared: *Williams Obstetrics* is an embedded-font scan whose
+ * text extracts as a substitution cipher, and while the prose comes back under
+ * a shift the digits do not. Its page count is `pdfinfo`'s; its edition and
+ * year are off the jacket and the copyright page. Its ISBN is simply absent,
+ * because a number nobody could read here is a number nobody should type.
  *
  * Two fields exist here that a catalogue does not usually carry. `sourceUrl` and
  * `license` are the terms these files are redistributed under: WHO publishes
@@ -102,12 +109,17 @@ export const categories: Category[] = [
 /**
  * Authors.
  *
- * Almost every one is an institution, which the `Author` type already handles:
- * no `era`, because an organisation has no birth or death dates. That is not an
- * accident of this collection: guidance on how to keep a woman alive through
- * childbirth is written by committees and published by ministries, and pretending
+ * Most are institutions, which the `Author` type already handles: no `era`,
+ * because an organisation has no birth or death dates. That is not an accident
+ * of this collection: guidance on how to keep a woman alive through childbirth
+ * is written by committees and published by ministries, and pretending
  * otherwise by crediting a lead editor would misrepresent what these documents
  * are.
+ *
+ * The three clinical textbooks are the other case, and they are credited the
+ * way a library credits them — lead editor "and colleagues" — because that is
+ * genuinely who wrote them. Attributing *Williams Obstetrics* to McGraw Hill
+ * would be the same mistake in the other direction.
  */
 export const authors: Author[] = [
   {
@@ -158,6 +170,33 @@ export const authors: Author[] = [
     bio: "The health ministry of British Columbia, Canada. Baby's Best Chance has been given to expectant parents in the province since 1979 and is now in its seventh edition, produced with Perinatal Services BC.",
     bioBn:
       "কানাডার ব্রিটিশ কলাম্বিয়া প্রদেশের স্বাস্থ্য মন্ত্রণালয়। ১৯৭৯ সাল থেকে প্রদেশের ভাবী অভিভাবকদের বেবি'জ বেস্ট চান্স দেওয়া হচ্ছে; বর্তমানে এটি সপ্তম সংস্করণে, পেরিনেটাল সার্ভিসেস বিসি-র সঙ্গে যৌথভাবে প্রকাশিত।",
+    bookCount: 0,
+  },
+  {
+    id: "a-cunningham",
+    slug: "cunningham-and-colleagues",
+    name: "F. Gary Cunningham and Colleagues",
+    nameBn: "এফ. গ্যারি কানিংহাম ও সহযোগীবৃন্দ",
+    bio: "The editors of Williams Obstetrics, and with one exception the faculty of the Department of Obstetrics and Gynecology at UT Southwestern Medical Center in Dallas, where the book has been written and revised against the practice of Parkland Hospital's maternity service since 1903. Cunningham has led it since the 18th edition; the 26th is edited with Leveno, Dashe, Hoffman, Spong and Casey.",
+    bioBn: "উইলিয়ামস অবস্টেট্রিক্স-এর সম্পাদকমণ্ডলী, যাঁরা প্রায় সবাই ডালাসের ইউটি সাউথওয়েস্টার্ন মেডিকেল সেন্টারের প্রসূতি ও স্ত্রীরোগ বিভাগের শিক্ষক। ১৯০৩ সাল থেকে পার্কল্যান্ড হাসপাতালের মাতৃসেবার প্রত্যক্ষ অভিজ্ঞতার সঙ্গে মিলিয়ে বইটি লেখা ও সংশোধিত হয়ে আসছে। ১৮তম সংস্করণ থেকে কানিংহাম এর নেতৃত্বে আছেন।",
+    bookCount: 0,
+  },
+  {
+    id: "a-hoffman",
+    slug: "hoffman-and-colleagues",
+    name: "Barbara L. Hoffman and Colleagues",
+    nameBn: "বারবারা এল. হফম্যান ও সহযোগীবৃন্দ",
+    bio: "The editors of Williams Gynecology, from the same Dallas department as its obstetric twin: Hoffman, Schorge, Bradshaw, Halvorson, Schaffer and Corton. The book was built to sit beside Williams Obstetrics rather than repeat it, which is why its atlas of surgical technique is drawn rather than photographed.",
+    bioBn: "উইলিয়ামস গাইনিকোলজি-র সম্পাদকমণ্ডলী — হফম্যান, শোরগে, ব্র্যাডশ, হ্যালভরসন, শেফার ও কর্টন — যাঁরা এর প্রসূতি-সহোদর বইটির একই ডালাস বিভাগেরই মানুষ। বইটি উইলিয়ামস অবস্টেট্রিক্স-এর পুনরাবৃত্তি নয়, পাশে বসার জন্যই তৈরি; তাই এর শল্যচিকিৎসার অ্যাটলাসটি আলোকচিত্র নয়, আঁকা।",
+    bookCount: 0,
+  },
+  {
+    id: "a-landon",
+    slug: "landon-and-colleagues",
+    name: "Mark B. Landon and Colleagues",
+    nameBn: "মার্ক বি. ল্যান্ডন ও সহযোগীবৃন্দ",
+    bio: "The nine editors who carry Gabbe's Obstetrics: Landon, Galan, Jauniaux, Driscoll, Berghella, Grobman, Kilpatrick, Cahill and Gyamfi-Bannerman, drawn from maternal-fetal medicine units across North America and Europe. Steven Gabbe founded the book in 1986 and his name stays on it; the editorial board has changed with every edition since.",
+    bioBn: "গ্যাবি'স অবস্টেট্রিক্স-এর নয়জন সম্পাদক — ল্যান্ডন, গ্যালান, জোনিও, ড্রিসকল, বেরগেলা, গ্রোবম্যান, কিলপ্যাট্রিক, কাহিল ও গিয়ামফি-ব্যানারম্যান — উত্তর আমেরিকা ও ইউরোপের মাতৃ-ভ্রূণ চিকিৎসা বিভাগগুলো থেকে আসা। ১৯৮৬ সালে স্টিভেন গ্যাবি বইটি শুরু করেন, তাঁর নাম আজও রয়ে গেছে; প্রতিটি সংস্করণেই সম্পাদকমণ্ডলী বদলেছে।",
     bookCount: 0,
   },
   {
@@ -216,6 +255,11 @@ interface Seed {
   description: string;
   descriptionBn?: string;
   featured?: boolean;
+  /**
+   * Standing order, low first. Only the three clinical references carry one.
+   * See `Book.priority` in `types` and the comparator in `lib/data/books`.
+   */
+  priority?: number;
   status?: BookStatus;
   /** Cover hue in degrees; drives the 3D spine and fallback generated art. */
   hue: number;
@@ -223,9 +267,10 @@ interface Seed {
   edition?: string;
   /**
    * Served path to the real cover WebP built by `scripts/build-covers.mjs`:
-   * page one of the file itself. Present for all sixteen, so the generated
-   * art in `lib/cover-theme` never actually shows on this catalogue; it is
-   * there for whatever the admin catalogues next.
+   * page one of the file itself, or, for the three references, the publisher's
+   * jacket supplied in `private/covers/`. Present for all nineteen, so the
+   * generated art in `lib/cover-theme` never actually shows on this catalogue;
+   * it is there for whatever the admin catalogues next.
    */
   coverImage?: string;
   /** Where the file came from, and the licence that permits redistributing it. */
@@ -698,6 +743,110 @@ const seeds: Seed[] = [
       addedAt: "2026-08-24",
     },
   },
+
+  /* ────────────────────────────────────────────────────────────────────────
+     The three references.
+
+     Appended rather than inserted, because `buildBook` derives the accession
+     code, shelf mark and download count from the array index: putting these
+     first would renumber all sixteen books above for no gain. Their place in
+     the library is set by `priority`, not by where they sit in this file.
+
+     They are also the only titles here that are not open-licensed. Every book
+     above is a ministry or WHO publication that may be redistributed and asks
+     only for the credit; these three are in copyright, and `license` says so
+     plainly rather than dressing it up. That is a decision for whoever runs
+     the library, and the record is honest about what it is.
+     ──────────────────────────────────────────────────────────────────────── */
+
+  // ── 17 Williams Obstetrics ──────────────────────────────────────────────
+  {
+    title: "Williams Obstetrics",
+    titleBn: "উইলিয়ামস অবস্টেট্রিক্স",
+    subtitle: "The standard reference on the practice of obstetrics",
+    slug: "williams-obstetrics",
+    authorId: "a-cunningham",
+    categoryId: "cat-pregnancy",
+    year: 2022,
+    publisher: "McGraw Hill",
+    pages: 1323,
+    edition: "26th",
+    coverImage: "/covers/williams-obstetrics.webp",
+    language: "en",
+    description:
+      "The book the specialty is taught from, in print continuously since 1903 and known to everyone who has sat an obstetrics exam as the bible. Maternal anatomy and physiology, the whole of antenatal care, labour and delivery, then every complication of pregnancy in turn, each chapter written against what the evidence actually shows and what Parkland Hospital's maternity service actually does. This is the reference the rest of the library's guidance is built on: where a WHO recommendation says what to do, this says why.",
+    descriptionBn:
+      "এই বই থেকেই প্রসূতিবিদ্যা শেখানো হয়। ১৯০৩ সাল থেকে অবিচ্ছিন্নভাবে ছাপা হচ্ছে, আর প্রসূতিবিদ্যার পরীক্ষা দিয়েছেন এমন সবাই এটিকে চেনেন 'বাইবেল' নামে। মায়ের শরীরতত্ত্ব ও শারীরবিদ্যা, সম্পূর্ণ প্রসবপূর্ব সেবা, প্রসব ও জন্ম, তারপর গর্ভাবস্থার প্রতিটি জটিলতা এক এক করে — প্রতিটি অধ্যায় লেখা হয়েছে প্রমাণ যা বলে এবং পার্কল্যান্ড হাসপাতালের মাতৃসেবা যা সত্যিই করে, তার সঙ্গে মিলিয়ে। এই গ্রন্থাগারের বাকি নির্দেশিকাগুলো যে ভিত্তির ওপর দাঁড়িয়ে, সেটিই এই বই: বিশ্ব স্বাস্থ্য সংস্থার সুপারিশ বলে কী করতে হবে, আর এই বই বলে কেন।",
+    featured: true,
+    priority: 1,
+    hue: 210,
+    license: "© 2022 McGraw Hill. All rights reserved.",
+    file: {
+      url: "/books/williams-obstetrics.pdf",
+      sizeMb: 109.0,
+      addedAt: "2026-08-26",
+    },
+  },
+
+  // ── 18 Williams Gynecology ──────────────────────────────────────────────
+  {
+    title: "Williams Gynecology",
+    titleBn: "উইলিয়ামস গাইনিকোলজি",
+    subtitle: "General gynaecology, reproductive endocrinology, oncology and surgery",
+    slug: "williams-gynecology",
+    authorId: "a-hoffman",
+    categoryId: "cat-complications",
+    year: 2016,
+    publisher: "McGraw-Hill Education",
+    pages: 1297,
+    edition: "Third edition",
+    coverImage: "/covers/williams-gynecology.webp",
+    language: "en",
+    description:
+      "The companion volume, and the half of the specialty a maternity library usually leaves out: benign disease, bleeding, infection, infertility, the gynaecologic cancers, and a surgical atlas of nearly a hundred operations drawn step by step rather than photographed. It matters here because the women in the other books do not stop being patients after the six-week check, and because a haemorrhage or a septic abortion is answered from this book.",
+    descriptionBn:
+      "সঙ্গী খণ্ডটি, এবং বিশেষত্বের সেই অর্ধেক যা মাতৃসেবার গ্রন্থাগারে সাধারণত থাকে না: সাধারণ রোগ, রক্তক্ষরণ, সংক্রমণ, বন্ধ্যত্ব, স্ত্রীরোগ-সংক্রান্ত ক্যানসার, এবং প্রায় একশো অপারেশনের একটি শল্য-অ্যাটলাস — ধাপে ধাপে আঁকা, আলোকচিত্র নয়। এটি এখানে দরকার, কারণ অন্য বইগুলোর নারীরা ছয় সপ্তাহের পরীক্ষার পরে রোগী থাকা বন্ধ করেন না, আর কারণ রক্তক্ষরণ বা সেপটিক গর্ভপাতের উত্তর এই বইয়েই আছে।",
+    featured: true,
+    priority: 2,
+    hue: 230,
+    license: "© 2016 McGraw-Hill Education. All rights reserved.",
+    file: {
+      url: "/books/williams-gynecology.pdf",
+      sizeMb: 186.7,
+      isbn: "978-0-07-184908-1",
+      addedAt: "2026-08-26",
+    },
+  },
+
+  // ── 19 Gabbe's Obstetrics ───────────────────────────────────────────────
+  {
+    title: "Gabbe's Obstetrics",
+    titleBn: "গ্যাবি'স অবস্টেট্রিক্স",
+    subtitle: "Normal and problem pregnancies",
+    slug: "gabbes-obstetrics",
+    authorId: "a-landon",
+    categoryId: "cat-complications",
+    year: 2025,
+    publisher: "Elsevier",
+    pages: 1473,
+    edition: "Ninth edition",
+    coverImage: "/covers/gabbes-obstetrics.webp",
+    language: "en",
+    description:
+      "The maternal-fetal medicine reference, and the newest book in the library. Its subtitle is the whole argument of it: the normal pregnancy and the problem pregnancy are the same pregnancy, described by the same physiology, and the chapters run from placental development to critical care without changing register. Strongest where the difficulty is medical rather than obstetric — the diabetic, cardiac, renal or epileptic patient who is also pregnant — which is exactly where guidance runs out.",
+    descriptionBn:
+      "মাতৃ-ভ্রূণ চিকিৎসার প্রামাণ্য গ্রন্থ, এবং এই গ্রন্থাগারের সবচেয়ে নতুন বই। এর উপশিরোনামেই পুরো যুক্তিটি রয়েছে: স্বাভাবিক গর্ভাবস্থা আর জটিল গর্ভাবস্থা একই গর্ভাবস্থা, একই শারীরবিদ্যায় বর্ণিত। অধ্যায়গুলো প্লাসেন্টার বিকাশ থেকে ক্রিটিক্যাল কেয়ার পর্যন্ত এক সুরেই চলে। যেখানে সমস্যাটি প্রসূতিগত নয় বরং চিকিৎসাগত — ডায়াবেটিস, হৃদরোগ, কিডনি বা মৃগীর রোগী যিনি একইসঙ্গে গর্ভবতী — সেখানেই এটি সবচেয়ে শক্তিশালী, আর ঠিক সেখানেই নির্দেশিকাগুলো ফুরিয়ে যায়।",
+    featured: true,
+    priority: 3,
+    hue: 335,
+    license: "© 2025 Elsevier Inc. All rights reserved.",
+    file: {
+      url: "/books/gabbes-obstetrics.pdf",
+      sizeMb: 174.7,
+      isbn: "978-0-323-93727-6",
+      addedAt: "2026-08-26",
+    },
+  },
 ];
 
 /**
@@ -772,6 +921,7 @@ function buildBook(seed: Seed, i: number): Book {
     downloads: 480 + ((i * 613) % 9200),
     rating: Math.round((3.6 + ((i * 7) % 14) / 10) * 10) / 10,
     featured: seed.featured ?? false,
+    priority: seed.priority,
     addedAt: seed.file.addedAt,
     uploadedBy: seed.file.uploadedBy ?? uploaders[i % uploaders.length],
   };
